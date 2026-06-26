@@ -272,6 +272,7 @@ function JobModal({ job, profile, onClose, onAccept, onSubmitWork, onRequestScop
 }
 
 export default function ConsultantPortal() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { profile, loading: profileLoading } = useProfile();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(profile?.id);
@@ -384,7 +385,8 @@ export default function ConsultantPortal() {
     return (
       <div id="app-shell">
         <div className="topbar">
-          <div className="brand">
+          <div className="brand" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)} style={{background:'none',border:'none',color:'var(--text)',alignItems:'center',cursor:'pointer',padding:0}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
             <div className="brand-mark">GA</div>
             <div>
               <div className="brand-name">Gabriel Academics</div>
@@ -448,7 +450,8 @@ export default function ConsultantPortal() {
       </div>
       
       <div className="layout">
-        <div className="sidebar">
+        {isMobileMenuOpen && <div className="mobile-menu-overlay open" onClick={() => setIsMobileMenuOpen(false)}></div>}
+        <div className={"sidebar " + (isMobileMenuOpen ? "open" : "")}>
           <div className="nav-section">
             <div className="nav-label">Main Menu</div>
             <div className={`nav-item ${activeTab === 'board' ? 'active' : ''}`} onClick={() => setActiveTab('board')}>Available Jobs</div>

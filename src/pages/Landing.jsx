@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, School, BookOpen, Calculator, Globe, Microscope, MessageCircle, Palette, Lock, GraduationCap, CheckCircle, Moon, Sun } from 'lucide-react';
+import { Star, School, BookOpen, Calculator, Globe, Microscope, MessageCircle, Palette, Lock, GraduationCap, CheckCircle, Moon, Sun, Menu, X } from 'lucide-react';
 import { useTheme } from '../lib/useTheme';
 import HeroAnimation from '../components/HeroAnimation';
 
 export default function Landing() {
   const navigate = useNavigate();
   const { isLightMode, toggleTheme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div id="app-shell" style={{background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
@@ -16,7 +17,9 @@ export default function Landing() {
           <div className="brand-mark">GA</div>
           <span style={{fontSize: '20px', fontWeight: 700, letterSpacing: '-0.5px'}}>Gabriel Academics</span>
         </div>
-        <div style={{display: 'flex', gap: '32px', alignItems: 'center', fontWeight: 500}}>
+
+        {/* Desktop Nav */}
+        <div className="land-nav-links-desktop" style={{display: 'flex', gap: '32px', alignItems: 'center', fontWeight: 500}}>
           <span style={{cursor: 'pointer', opacity: 0.8}}>How It Works</span>
           <span style={{cursor: 'pointer', opacity: 0.8}}>Disciplines</span>
           <span style={{cursor: 'pointer', opacity: 0.8}}>Our Guarantee</span>
@@ -26,7 +29,35 @@ export default function Landing() {
           </button>
           <button className="btn btn-primary" onClick={() => navigate('/auth/client')}>Get Started</button>
         </div>
+
+        {/* Mobile Nav Toggle */}
+        <div className="land-nav-mobile-toggle" style={{display: 'none'}}>
+          <button style={{background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: '16px'}} onClick={toggleTheme}>
+            {isLightMode ? <Moon size={24} /> : <Sun size={24} />}
+          </button>
+          <button style={{background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center'}} onClick={() => setMobileMenuOpen(true)}>
+            <Menu size={28} />
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div style={{position: 'fixed', inset: 0, background: 'var(--bg)', zIndex: 999, display: 'flex', flexDirection: 'column', padding: '24px'}}>
+          <div style={{display: 'flex', justifyContent: 'flex-end', marginBottom: '40px'}}>
+            <button style={{background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>
+              <X size={32} />
+            </button>
+          </div>
+          <div style={{display: 'flex', flexDirection: 'column', gap: '32px', fontSize: '24px', fontWeight: 600}}>
+            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>How It Works</span>
+            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>Disciplines</span>
+            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>Our Guarantee</span>
+            <span style={{cursor: 'pointer'}} onClick={() => navigate('/careers')}>Become a Consultant</span>
+            <button className="btn btn-primary" style={{marginTop: '24px', padding: '16px', fontSize: '20px'}} onClick={() => navigate('/auth/client')}>Get Started</button>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <HeroAnimation>
