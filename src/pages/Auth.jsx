@@ -21,7 +21,30 @@ export default function Auth() {
   const [qualification, setQualification] = useState('');
   const [subjects, setSubjects] = useState('');
   const [qualFile, setQualFile] = useState(null);
-  
+
+  React.useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        const userRole = profile?.role || role || 'client';
+        navigate(`/${userRole}`);
+      }
+    });
+    
+    // Also check if they are already logged in when arriving
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        const userRole = profile?.role || role || 'client';
+        navigate(`/${userRole}`);
+      }
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [navigate, role]);
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setError('');
@@ -52,6 +75,7 @@ export default function Auth() {
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/${role}`,
             data: {
               full_name: fullName,
               phone: phone,
