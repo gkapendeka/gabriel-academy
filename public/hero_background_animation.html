@@ -1,0 +1,331 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0a0f; }
+  .hero-wrapper {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: #0a0a0f;
+    overflow: hidden;
+    border-radius: 12px;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas#bg-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 0 200px;
+    width: 100%;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .hero-title {
+    font-size: 42px;
+    font-weight: 500;
+    color: #ffffff;
+    line-height: 1.18;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+  .hero-title span {
+    background: linear-gradient(135deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.65;
+    margin-bottom: 32px;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(167,139,250,0.15);
+    border: 0.5px solid rgba(167,139,250,0.4);
+    color: rgba(167,139,250,0.9);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 0.01em;
+  }
+  .fade-left {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 160px;
+    background: linear-gradient(to right, #0a0a0f 0%, transparent 100%);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .fade-right {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 160px;
+    background: linear-gradient(to left, #0a0a0f 0%, transparent 100%);
+    z-index: 5;
+    pointer-events: none;
+  }
+  .left-label {
+    position: absolute;
+    left: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 8;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .right-label {
+    position: absolute;
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 8;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    align-items: flex-end;
+  }
+  .side-chip {
+    background: rgba(255,255,255,0.04);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    animation: fadeChip 1s ease forwards;
+  }
+  .side-chip:nth-child(1) { animation-delay: 0.4s; }
+  .side-chip:nth-child(2) { animation-delay: 0.7s; }
+  .side-chip:nth-child(3) { animation-delay: 1.0s; }
+  @keyframes fadeChip {
+    to { opacity: 1; }
+  }
+  .chip-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .chip-dot.purple { background: #a78bfa; box-shadow: 0 0 6px #a78bfa80; }
+  .chip-dot.blue   { background: #60a5fa; box-shadow: 0 0 6px #60a5fa80; }
+  .chip-dot.teal   { background: #34d399; box-shadow: 0 0 6px #34d39980; }
+  .chip-dot.amber  { background: #fbbf24; box-shadow: 0 0 6px #fbbf2480; }
+  .chip-dot.pink   { background: #f472b6; box-shadow: 0 0 6px #f472b680; }
+  .chip-dot.coral  { background: #fb923c; box-shadow: 0 0 6px #fb923c80; }
+  .chip-label { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; font-weight: 400; letter-spacing: 0.01em; }
+  .chip-value { font-size: 12px; color: rgba(255,255,255,0.8); white-space: nowrap; font-weight: 500; margin-left: auto; }
+</style>
+
+<div class="hero-wrapper" id="hero">
+  <canvas id="bg-canvas"></canvas>
+  <div class="fade-left"></div>
+  <div class="fade-right"></div>
+
+  <div class="left-label">
+    <div class="side-chip">
+      <div class="chip-dot purple"></div>
+      <span class="chip-label">Creative</span>
+      <span class="chip-value">∞</span>
+    </div>
+    <div class="side-chip">
+      <div class="chip-dot blue"></div>
+      <span class="chip-label">Precision</span>
+      <span class="chip-value">100%</span>
+    </div>
+    <div class="side-chip">
+      <div class="chip-dot teal"></div>
+      <span class="chip-label">Speed</span>
+      <span class="chip-value">×12</span>
+    </div>
+  </div>
+
+  <div class="right-label">
+    <div class="side-chip">
+      <div class="chip-dot amber"></div>
+      <span class="chip-label">Experience</span>
+      <span class="chip-value">12 yr</span>
+    </div>
+    <div class="side-chip">
+      <div class="chip-dot pink"></div>
+      <span class="chip-label">Projects</span>
+      <span class="chip-value">240+</span>
+    </div>
+    <div class="side-chip">
+      <div class="chip-dot coral"></div>
+      <span class="chip-label">Clients</span>
+      <span class="chip-value">80+</span>
+    </div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Welcome to Gabriel</div>
+    <div class="hero-title">Design that<br><span>moves people</span></div>
+    <div class="hero-sub">Crafting digital experiences with intention, precision, and a relentless eye for detail.</div>
+    <div class="hero-cta">Explore work →</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+const hero = document.getElementById('hero');
+
+let W, H, particles, connections, time = 0;
+
+const COLORS = [
+  [167, 139, 250],
+  [96, 165, 250],
+  [52, 211, 153],
+  [251, 191, 36],
+  [244, 114, 182],
+  [251, 146, 60],
+];
+
+function resize() {
+  W = canvas.width = hero.offsetWidth;
+  H = canvas.height = hero.offsetHeight;
+  initParticles();
+}
+
+function initParticles() {
+  const count = 70;
+  particles = [];
+  const midClear = 0.28;
+
+  for (let i = 0; i < count; i++) {
+    let x;
+    if (Math.random() < 0.5) {
+      x = Math.random() * W * midClear;
+    } else {
+      x = W - Math.random() * W * midClear;
+    }
+    const col = COLORS[Math.floor(Math.random() * COLORS.length)];
+    particles.push({
+      x,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.22,
+      vy: (Math.random() - 0.5) * 0.18,
+      r: 1.5 + Math.random() * 2,
+      col,
+      alpha: 0.25 + Math.random() * 0.5,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.005 + Math.random() * 0.008,
+    });
+  }
+}
+
+function drawOrb(cx, cy, radius, col, alpha) {
+  const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+  grd.addColorStop(0, `rgba(${col[0]},${col[1]},${col[2]},${alpha})`);
+  grd.addColorStop(1, `rgba(${col[0]},${col[1]},${col[2]},0)`);
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = grd;
+  ctx.fill();
+}
+
+const MAX_DIST = 130;
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  const ambientL = [
+    { cx: W * 0.08, cy: H * 0.35, r: 200, col: [167, 139, 250], a: 0.06 },
+    { cx: W * 0.15, cy: H * 0.7,  r: 160, col: [96, 165, 250],   a: 0.05 },
+    { cx: W * 0.92, cy: H * 0.3,  r: 200, col: [52, 211, 153],   a: 0.06 },
+    { cx: W * 0.85, cy: H * 0.72, r: 160, col: [251, 191, 36],   a: 0.04 },
+  ];
+  for (const o of ambientL) drawOrb(o.cx, o.cy, o.r, o.col, o.a);
+
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    const pulse = 0.85 + 0.15 * Math.sin(time * p.speed * 40 + p.phase);
+
+    for (let j = i + 1; j < particles.length; j++) {
+      const q = particles[j];
+      const dx = p.x - q.x, dy = p.y - q.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < MAX_DIST) {
+        const fade = 1 - dist / MAX_DIST;
+        const blendR = Math.round((p.col[0] + q.col[0]) / 2);
+        const blendG = Math.round((p.col[1] + q.col[1]) / 2);
+        const blendB = Math.round((p.col[2] + q.col[2]) / 2);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+        ctx.strokeStyle = `rgba(${blendR},${blendG},${blendB},${fade * 0.18})`;
+        ctx.lineWidth = fade * 0.8;
+        ctx.stroke();
+      }
+    }
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${p.col[0]},${p.col[1]},${p.col[2]},${p.alpha * pulse})`;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r * pulse * 2.5, 0, Math.PI * 2);
+    const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * pulse * 2.5);
+    grd.addColorStop(0, `rgba(${p.col[0]},${p.col[1]},${p.col[2]},${p.alpha * 0.25 * pulse})`);
+    grd.addColorStop(1, `rgba(${p.col[0]},${p.col[1]},${p.col[2]},0)`);
+    ctx.fillStyle = grd;
+    ctx.fill();
+  }
+}
+
+function update() {
+  time += 0.016;
+  for (const p of particles) {
+    p.x += p.vx + 0.12 * Math.sin(time * 0.3 + p.phase);
+    p.y += p.vy + 0.08 * Math.cos(time * 0.25 + p.phase);
+
+    if (p.x < 0) p.x = W * 0.28;
+    if (p.x > W * 0.28 && p.x < W * 0.72) {
+      if (p.vx < 0) p.x = 0;
+      else p.x = W;
+    }
+    if (p.x > W) p.x = W * 0.72;
+    if (p.y < 0) p.y = H;
+    if (p.y > H) p.y = 0;
+  }
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+resize();
+window.addEventListener('resize', resize);
+loop();
+</script>
