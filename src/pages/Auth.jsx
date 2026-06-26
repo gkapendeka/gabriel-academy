@@ -26,7 +26,7 @@ export default function Auth() {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-        const userRole = profile?.role || role || 'client';
+        const userRole = profile?.role || session.user.user_metadata?.role || role || 'client';
         navigate(`/${userRole}`);
       }
     });
@@ -35,7 +35,7 @@ export default function Auth() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
-        const userRole = profile?.role || role || 'client';
+        const userRole = profile?.role || session.user.user_metadata?.role || role || 'client';
         navigate(`/${userRole}`);
       }
     });
@@ -65,9 +65,8 @@ export default function Auth() {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         
-        // Let's redirect based on actual DB role to prevent routing to /undefined
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single();
-        const userRole = profile?.role || role || 'client'; // fallback
+        const userRole = profile?.role || data.user.user_metadata?.role || role || 'client'; // fallback
         
         navigate(`/${userRole}`);
       } else {

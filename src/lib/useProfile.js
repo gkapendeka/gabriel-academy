@@ -20,8 +20,18 @@ export function useProfile() {
           .eq('id', user.id)
           .single();
 
-        if (error) throw error;
-        setProfile(data);
+        if (error || !data) {
+          console.warn('Profile not found, falling back to user_metadata', error);
+          setProfile({
+            id: user.id,
+            email: user.email,
+            role: user.user_metadata?.role || 'client',
+            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || ''
+          });
+        } else {
+          setProfile(data);
+        }
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
