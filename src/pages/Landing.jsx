@@ -1,8 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Star, School, BookOpen, Calculator, Globe, Microscope, MessageCircle, Palette, Lock, GraduationCap, CheckCircle, Moon, Sun } from 'lucide-react';
+import { useTheme } from '../lib/useTheme';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { isLightMode, toggleTheme } = useTheme();
 
   return (
     <div id="app-shell" style={{background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
@@ -17,6 +20,9 @@ export default function Landing() {
           <span style={{cursor: 'pointer', opacity: 0.8}}>Disciplines</span>
           <span style={{cursor: 'pointer', opacity: 0.8}}>Our Guarantee</span>
           <span style={{cursor: 'pointer', opacity: 0.8}} onClick={() => navigate('/careers')}>Become a Consultant</span>
+          <button style={{background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center'}} onClick={toggleTheme}>
+            {isLightMode ? <Moon size={20} /> : <Sun size={20} />}
+          </button>
           <button className="btn btn-primary" onClick={() => navigate('/auth/client')}>Get Started</button>
         </div>
       </nav>
@@ -28,8 +34,8 @@ export default function Landing() {
         <div style={{position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', background: 'var(--gold)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%'}}></div>
 
         <div style={{zIndex: 1}}>
-          <div style={{display: 'inline-block', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
-            ⭐ Trusted by students from Grade R to PhD across South Africa
+          <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
+            <Star size={16} /> Trusted by students from Grade R to PhD across South Africa
           </div>
           <h1 style={{fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', marginBottom: '24px', lineHeight: 1.1, maxWidth: '800px'}}>
             Academic Excellence, <br/><span style={{color: 'var(--gold)'}}>Delivered to You</span>
@@ -95,7 +101,7 @@ export default function Landing() {
           </div>
 
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '48px'}}>
-            {['🏫 Primary School', '🎒 Secondary School', '🎓 Undergraduate', '📜 Postgraduate'].map((level, idx) => (
+            {['Primary School', 'Secondary School', 'Undergraduate', 'Postgraduate'].map((level, idx) => (
               <div key={idx} style={{background: idx === 0 ? 'var(--blue)' : 'var(--surface)', border: '1px solid var(--border)', padding: '16px', textAlign: 'center', borderRadius: '8px', fontWeight: 600}}>
                 {level}
               </div>
@@ -105,7 +111,7 @@ export default function Landing() {
           {/* Primary School Deep Dive */}
           <div style={{background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '48px'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
-              <div style={{fontSize: '48px'}}>🏫</div>
+              <div style={{color: 'var(--blue)'}}><School size={48} /></div>
               <div>
                 <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Primary School</h3>
                 <div style={{color: 'var(--muted)'}}>Grade R – Grade 7 · Ages 5–13</div>
@@ -114,27 +120,27 @@ export default function Landing() {
             
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>✏️ English & Literacy</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20} /> English & Literacy</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Reading · Writing · Comprehension · Creative Writing</div>
               </div>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>🔢 Mathematics</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20} /> Mathematics</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Numeracy · Problem Solving · Mental Maths</div>
               </div>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>🌍 Life Skills</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20} /> Life Skills</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Social Studies · Environment · Health</div>
               </div>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>🔬 Natural Sciences</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20} /> Natural Sciences</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Basic Science · Technology · Discovery</div>
               </div>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>🗣️ Home Language</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><MessageCircle size={20} /> Home Language</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Zulu · Afrikaans · Sotho · Xhosa + more</div>
               </div>
               <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}>🎨 Arts & Crafts</div>
+                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Palette size={20} /> Arts & Crafts</div>
                 <div style={{color: 'var(--muted)', fontSize: '14px'}}>Creative projects · School assignments · Portfolios</div>
               </div>
             </div>
@@ -152,21 +158,21 @@ export default function Landing() {
 
           <div style={{display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', margin: '0 auto'}}>
             <div style={{display: 'flex', gap: '24px', alignItems: 'flex-start', background: 'var(--card)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border)'}}>
-              <div style={{fontSize: '32px'}}>🔒</div>
+              <div style={{color: 'var(--gold)'}}><Lock size={32} /></div>
               <div>
                 <h3 style={{fontSize: '20px', fontWeight: 700, marginBottom: '8px'}}>Complete Confidentiality</h3>
                 <p style={{color: 'var(--muted)', lineHeight: 1.6}}>Your identity is never shared with any consultant. You are known only by a reference code. All work flows through Gabriel Academics.</p>
               </div>
             </div>
             <div style={{display: 'flex', gap: '24px', alignItems: 'flex-start', background: 'var(--card)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border)'}}>
-              <div style={{fontSize: '32px'}}>🎓</div>
+              <div style={{color: 'var(--purple)'}}><GraduationCap size={32} /></div>
               <div>
                 <h3 style={{fontSize: '20px', fontWeight: 700, marginBottom: '8px'}}>Verified Experts</h3>
                 <p style={{color: 'var(--muted)', lineHeight: 1.6}}>Every consultant is personally vetted — qualifications verified, background checked, performance monitored. No exceptions.</p>
               </div>
             </div>
             <div style={{display: 'flex', gap: '24px', alignItems: 'flex-start', background: 'var(--card)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border)'}}>
-              <div style={{fontSize: '32px'}}>✅</div>
+              <div style={{color: 'var(--green)'}}><CheckCircle size={32} /></div>
               <div>
                 <h3 style={{fontSize: '20px', fontWeight: 700, marginBottom: '8px'}}>Quality Before Delivery</h3>
                 <p style={{color: 'var(--muted)', lineHeight: 1.6}}>Nothing reaches you without passing our internal QA review. If it falls short, it goes back for revision first.</p>
