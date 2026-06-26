@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { sendEmail, EmailTemplates } from '../lib/EmailService';
+import { sendEmail, EmailTemplates } from '../lib/emailService';
 
 export default function Auth() {
   const { role } = useParams(); // client, consultant, admin
