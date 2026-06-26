@@ -21,9 +21,9 @@ export default function Landing() {
 
         {/* Desktop Nav */}
         <div className="land-nav-links-desktop" style={{display: 'flex', gap: '32px', alignItems: 'center', fontWeight: 500}}>
-          <span style={{cursor: 'pointer', opacity: 0.8}}>How It Works</span>
-          <span style={{cursor: 'pointer', opacity: 0.8}}>Disciplines</span>
-          <span style={{cursor: 'pointer', opacity: 0.8}}>Our Guarantee</span>
+          <span style={{cursor: 'pointer', opacity: 0.8}} onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>How It Works</span>
+          <span style={{cursor: 'pointer', opacity: 0.8}} onClick={() => document.getElementById('disciplines')?.scrollIntoView({ behavior: 'smooth' })}>Disciplines</span>
+          <span style={{cursor: 'pointer', opacity: 0.8}} onClick={() => document.getElementById('guarantee')?.scrollIntoView({ behavior: 'smooth' })}>Our Guarantee</span>
           <span style={{cursor: 'pointer', opacity: 0.8}} onClick={() => navigate('/careers')}>Become a Consultant</span>
           <button style={{background: 'transparent', border: 'none', color: 'var(--text)', cursor: 'pointer', display: 'flex', alignItems: 'center'}} onClick={toggleTheme}>
             {isLightMode ? <Moon size={20} /> : <Sun size={20} />}
@@ -51,9 +51,9 @@ export default function Landing() {
             </button>
           </div>
           <div style={{display: 'flex', flexDirection: 'column', gap: '32px', fontSize: '24px', fontWeight: 600}}>
-            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>How It Works</span>
-            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>Disciplines</span>
-            <span style={{cursor: 'pointer'}} onClick={() => setMobileMenuOpen(false)}>Our Guarantee</span>
+            <span style={{cursor: 'pointer'}} onClick={() => { setMobileMenuOpen(false); document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' }); }}>How It Works</span>
+            <span style={{cursor: 'pointer'}} onClick={() => { setMobileMenuOpen(false); document.getElementById('disciplines')?.scrollIntoView({ behavior: 'smooth' }); }}>Disciplines</span>
+            <span style={{cursor: 'pointer'}} onClick={() => { setMobileMenuOpen(false); document.getElementById('guarantee')?.scrollIntoView({ behavior: 'smooth' }); }}>Our Guarantee</span>
             <span style={{cursor: 'pointer'}} onClick={() => navigate('/careers')}>Become a Consultant</span>
             <button className="btn btn-primary" style={{marginTop: '24px', padding: '16px', fontSize: '20px'}} onClick={() => navigate('/auth/client')}>Get Started</button>
           </div>
@@ -123,7 +123,7 @@ export default function Landing() {
 
 
       {/* Who We Serve */}
-      <div style={{padding: '100px 24px'}}>
+      <div id="disciplines" style={{padding: '100px 24px'}}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <div style={{textAlign: 'center', marginBottom: '64px'}}>
             <h2 style={{fontSize: '42px', fontWeight: 700, marginBottom: '16px'}}>Who We Serve</h2>
@@ -239,7 +239,7 @@ export default function Landing() {
 
 
       {/* Our Promise */}
-      <div style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
+      <div id="guarantee" style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <div style={{textAlign: 'center', marginBottom: '64px'}}>
             <h2 style={{fontSize: '42px', fontWeight: 700, marginBottom: '16px'}}>The Gabriel Guarantee</h2>
