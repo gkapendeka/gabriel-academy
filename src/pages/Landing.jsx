@@ -30,7 +30,7 @@ export default function Landing() {
 
       {/* Hero */}
       <HeroAnimation>
-        <div style={{zIndex: 1}}>
+        <div style={{zIndex: 1, textAlign: 'center'}}>
           <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
             <Star size={16} /> Trusted by students from Grade R to PhD across South Africa
           </div>
