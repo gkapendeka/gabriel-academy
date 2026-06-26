@@ -287,7 +287,7 @@ export default function ClientPortal() {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotif, setShowNotif] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(profile?.id);
   
   const [selectedJob, setSelectedJob] = useState(null);
   const [checkoutJob, setCheckoutJob] = useState(null);
