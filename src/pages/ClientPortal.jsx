@@ -403,7 +403,6 @@ export default function ClientPortal() {
         level: formData.level,
         pages: formData.pages,
         deadline: new Date(formData.deadline).toISOString(),
-        client_confirmed_deadline: formData.confirmed_deadline ? new Date(formData.confirmed_deadline).toISOString() : new Date(formData.deadline).toISOString(),
         client_budget: formData.client_budget,
         instructions: formData.instructions,
         reference_style: formData.reference_style,
