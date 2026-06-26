@@ -65,7 +65,7 @@ export default function Landing() {
           <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
             <Star size={16} /> Trusted by students from Grade R to PhD across South Africa
           </div>
-          <h1 style={{fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', marginBottom: '24px', lineHeight: 1.1, maxWidth: '800px'}}>
+          <h1 style={{fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', marginBottom: '24px', lineHeight: 1.1, maxWidth: '800px', margin: '0 auto 24px', textAlign: 'center'}}>
             Academic Excellence, <br/><span style={{color: 'var(--gold)'}}>Delivered to You</span>
           </h1>
           <p style={{fontSize: '20px', color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 48px', lineHeight: 1.6}}>
