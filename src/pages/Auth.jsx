@@ -229,6 +229,14 @@ export default function Auth() {
             <strong>Note:</strong> Your account will need to be verified by Gabriel Academics before you can accept jobs.
           </div>
         )}
+        {role === 'consultant' && (
+          <div style={{textAlign: 'center', marginTop: '16px'}}>
+            <span
+              onClick={() => navigate('/auth/admin')}
+              style={{fontSize: '10px', color: 'var(--dim)', opacity: 0.35, cursor: 'pointer', letterSpacing: '0.5px'}}
+            >admin</span>
+          </div>
+        )}
       </div>
     </div>
   );
