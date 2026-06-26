@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, School, BookOpen, Calculator, Globe, Microscope, MessageCircle, Palette, Lock, GraduationCap, CheckCircle, Moon, Sun } from 'lucide-react';
 import { useTheme } from '../lib/useTheme';
+import HeroAnimation from '../components/HeroAnimation';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -28,11 +29,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <div style={{flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden'}}>
-        {/* Decorative Background Elements */}
-        <div style={{position: 'absolute', top: '-10%', left: '-10%', width: '400px', height: '400px', background: 'var(--blue)', filter: 'blur(150px)', opacity: 0.2, borderRadius: '50%'}}></div>
-        <div style={{position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', background: 'var(--gold)', filter: 'blur(150px)', opacity: 0.15, borderRadius: '50%'}}></div>
-
+      <HeroAnimation>
         <div style={{zIndex: 1}}>
           <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
             <Star size={16} /> Trusted by students from Grade R to PhD across South Africa
@@ -57,7 +54,7 @@ export default function Landing() {
             <span>✓ Simple Process</span>
           </div>
         </div>
-      </div>
+      </HeroAnimation>
 
       {/* How it Works */}
       <div style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
