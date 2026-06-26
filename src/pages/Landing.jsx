@@ -290,8 +290,7 @@ export default function Landing() {
             <span style={{cursor: 'pointer'}}>Privacy Policy</span>
             <span style={{cursor: 'pointer'}}>Terms of Service</span>
             <span style={{cursor: 'pointer'}} onClick={() => navigate('/careers')}>Become a Consultant</span>
-            <span style={{cursor: 'pointer'}} onClick={() => navigate('/auth/consultant')}>Consultant Login</span>
-            <span style={{cursor: 'pointer'}} onClick={() => navigate('/auth/admin')}>Admin Login</span>
+            <span style={{cursor: 'pointer'}} onClick={() => navigate('/auth/consultant')}>Staff Login</span>
             <span style={{cursor: 'pointer', color: 'var(--gold)'}} onClick={() => navigate('/auth/client')}>Client Login</span>
           </div>
         </div>
