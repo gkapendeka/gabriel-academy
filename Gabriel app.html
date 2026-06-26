@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gabriel Academics — Expert Academic Assistance</title>
+<meta name="description" content="Premium academic assistance for postgraduate students. Confidential, professional, delivered on time.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0F1E;--surface:#111827;--card:#1A2235;--border:#2A3450;
+  --gold:#F59E0B;--blue:#3B82F6;--green:#10B981;--red:#EF4444;--purple:#8B5CF6;
+  --text:#F9FAFB;--muted:#9CA3AF;--dim:#6B7280;
+  --font:'Inter',system-ui,sans-serif
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+a{color:inherit;text-decoration:none}
+input,select,textarea{font-family:var(--font)}
+
+/* ── AUTH SCREEN ── */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px;width:100%;max-width:420px}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.auth-logo-mark{width:44px;height:44px;background:var(--gold);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#0A0F1E}
+.auth-logo-text{font-size:18px;font-weight:700}
+.auth-logo-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.auth-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.auth-tabs{display:flex;gap:2px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:7px;text-align:center;border-radius:6px;font-size:13px;cursor:pointer;color:var(--muted);border:none;background:transparent;font-family:var(--font)}
+.auth-tab.active{background:var(--card);color:var(--text);font-weight:500}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--text);font-size:13px;outline:none;transition:border .15s}
+.form-input:focus{border-color:var(--blue)}
+select.form-input option{background:var(--surface)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:var(--font);transition:all .15s}
+.btn-block{width:100%}
+.btn-gold{background:var(--gold);color:#0A0F1E}
+.btn-gold:hover{background:#D97706}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2563EB}
+.btn-ghost{background:var(--card);color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--blue)}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-xs{padding:3px 9px;font-size:11px;border-radius:5px}
+.auth-role-note{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--purple);margin-top:14px}
+.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--red);margin-bottom:14px;display:none}
+.success-msg{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--green);margin-bottom:14px;display:none}
+
+/* ── APP SHELL ── */
+#app-shell{display:none;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-mark{width:34px;height:34px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0A0F1E}
+.brand-name{font-size:15px;font-weight:700}
+.brand-role{font-size:11px;color:var(--muted);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.notif-btn{position:relative;width:34px;height:34px;background:var(--card);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.notif-badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:1px 4px;min-width:14px;text-align:center}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer}
+.user-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.user-name{font-size:12px;font-weight:500}
+
+.layout{display:flex;flex:1;overflow:hidden;height:calc(100vh - 54px)}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:12px 8px;flex-shrink:0;overflow-y:auto}
+.nav-section{margin-bottom:4px}
+.nav-label{font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;padding:8px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:13px;transition:all .15s;margin-bottom:1px;border:1px solid transparent}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,.12);color:var(--blue);border-color:rgba(59,130,246,.2)}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--gold);color:#0A0F1E;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px}
+.nav-badge-red{background:var(--red);color:#fff}
+
+.main{flex:1;overflow-y:auto;padding:24px}
+.page-header{margin-bottom:22px}
+.page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted)}
+
+/* ── CARDS & STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px}
+.stat-value{font-size:23px;font-weight:700}
+.stat-delta{font-size:11px;margin-top:5px;color:var(--muted)}
+.delta-up{color:var(--green)}
+
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:14px;font-weight:600}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surface);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.mono{font-family:monospace;font-size:12px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-new{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.badge-posted{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.badge-pending{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.2)}
+.badge-active{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.badge-submitted{background:rgba(139,92,246,.12);color:var(--purple);border:1px solid rgba(139,92,246,.2)}
+.badge-qa_review{background:rgba(139,92,246,.12);color:var(--purple);border:1px solid rgba(139,92,246,.2)}
+.badge-qa_failed{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.badge-delivered{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.badge-cancelled{background:rgba(107,114,128,.12);color:var(--dim);border:1px solid rgba(107,114,128,.2)}
+.badge-cleared{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.badge-escrow{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+.badge-paid{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-gold{background:var(--gold)}
+.dot-blue{background:var(--blue)}
+.dot-green{background:var(--green)}
+.dot-red{background:var(--red)}
+.dot-purple{background:var(--purple)}
+
+/* ── RATE PILL ── */
+.rate-pill{display:inline-block;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:monospace}
+
+/* ── SHIELD BANNER ── */
+.shield-banner{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:10px;margin-bottom:18px;font-size:12px;color:var(--purple)}
+.shield-banner strong{display:block;font-size:13px;margin-bottom:2px;color:#A78BFA}
+
+/* ── CARD BOX ── */
+.card-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.card-box-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}.stats-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr}.sidebar{display:none}.topbar{padding:0 14px}}
+
+/* ── PIPELINE ── */
+.pipeline{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;margin-bottom:20px}
+.pipe-col{min-width:175px;flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px}
+.pipe-head{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pipe-count{background:rgba(255,255,255,.07);color:var(--muted);font-size:10px;padding:2px 7px;border-radius:10px}
+.pipe-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:7px;cursor:pointer;transition:border .15s}
+.pipe-card:hover{border-color:var(--blue)}
+.pipe-ref{font-size:10px;color:var(--dim);font-family:monospace;margin-bottom:4px}
+.pipe-title{font-size:12px;font-weight:500;line-height:1.4;margin-bottom:6px}
+.pipe-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal-lg{max-width:680px}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-body{padding:20px}
+.modal-foot{padding:13px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.close-btn{width:28px;height:28px;border-radius:6px;background:var(--card);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px}
+
+/* ── FORM ── */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-bottom:6px}
+.form-note{font-size:11px;color:var(--dim);margin-top:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+textarea.form-input{resize:vertical;min-height:90px}
+
+/* ── PROGRESS BAR ── */
+.prog-wrap{background:var(--bg);border-radius:20px;height:5px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:20px;background:var(--blue);transition:width .4s}
+
+/* ── ACTIVITY ── */
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.activity-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.activity-text{font-size:12px;color:var(--text);line-height:1.5}
+.activity-time{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* ── NOTIF PANEL ── */
+.notif-panel{position:fixed;top:62px;right:16px;width:340px;background:var(--surface);border:1px solid var(--border);border-radius:12px;z-index:400;max-height:450px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.notif-item{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.notif-item:hover{background:var(--card)}
+.notif-item.unread{background:rgba(59,130,246,.04)}
+.notif-item:last-child{border-bottom:none}
+.notif-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px}
+.notif-body{font-size:11px;color:var(--muted);line-height:1.4}
+.notif-time{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* ── CHAT ── */
+.chat-wrap{display:flex;flex-direction:column;gap:12px;max-height:350px;overflow-y:auto;padding:4px 0;margin-bottom:14px}
+.chat-bubble{display:flex;gap:8px;align-items:flex-start}
+.chat-bubble.mine{flex-direction:row-reverse}
+.bubble-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.bubble-body{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;max-width:75%}
+.chat-bubble.mine .bubble-body{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.2)}
+.bubble-text{font-size:12px;color:var(--text);line-height:1.5}
+.bubble-time{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.3}
+.empty-text{font-size:13px}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;right:24px;z-index:900;display:flex;flex-direction:column;gap:8px}
+.toast-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;min-width:260px;animation:slideIn .2s ease}
+.toast-item.success{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.08)}
+.toast-item.error{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08)}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── LANDING PAGE ── */
+#landing{display:none;flex-direction:column;min-height:100vh}
+.land-nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;background:rgba(10,15,30,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.05);position:sticky;top:0;z-index:100}
+.land-logo{display:flex;align-items:center;gap:10px}
+.land-logo-mark{width:36px;height:36px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0A0F1E}
+.land-logo-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.land-nav-cta{padding:8px 20px;background:var(--gold);color:#0A0F1E;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.land-nav-links{display:flex;align-items:center;gap:24px}
+.land-nav-link{font-size:13px;color:var(--muted);cursor:pointer;transition:color .15s;background:none;border:none;font-family:var(--font)}
+.land-nav-link:hover{color:var(--text)}
+.land-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:90px 24px 70px;position:relative;overflow:hidden}
+.hero-glow{position:absolute;top:0;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(59,130,246,.1) 0%,transparent 65%);pointer-events:none}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--gold);font-weight:500;margin-bottom:24px}
+.hero-title{font-size:54px;font-weight:800;line-height:1.08;letter-spacing:-1.5px;max-width:720px;margin-bottom:20px}
+.hero-title span{background:linear-gradient(135deg,var(--gold),#FCD34D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:17px;color:var(--muted);max-width:500px;line-height:1.7;margin-bottom:36px}
+.hero-cta-row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:48px}
+.btn-hero-primary{padding:14px 34px;background:var(--gold);color:#0A0F1E;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-hero-primary:hover{background:#D97706;transform:translateY(-1px)}
+.btn-hero-ghost{padding:14px 34px;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-hero-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.hero-trust{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center}
+.trust-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.trust-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.land-section{padding:80px 48px;max-width:1100px;margin:0 auto;width:100%}
+.land-divider{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.sec-eyebrow{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+.sec-title{font-size:34px;font-weight:700;letter-spacing:-.5px;margin-bottom:14px}
+.sec-sub{font-size:15px;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:0}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:48px}
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
+.step-num{width:32px;height:32px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--gold);margin-bottom:16px}
+.step-title{font-size:14px;font-weight:600;margin-bottom:8px}
+.step-body{font-size:13px;color:var(--muted);line-height:1.6}
+.disc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
+.disc-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.disc-icon{font-size:22px}
+.disc-name{font-size:13px;font-weight:600}
+.disc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.guar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.guar-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center}
+.guar-icon{font-size:32px;margin-bottom:12px}
+.guar-title{font-size:14px;font-weight:600;margin-bottom:8px}
+.guar-body{font-size:13px;color:var(--muted);line-height:1.6}
+.cta-band{background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(59,130,246,.07));border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:64px 48px;text-align:center}
+.cta-band-title{font-size:32px;font-weight:700;margin-bottom:12px}
+.cta-band-sub{font-size:15px;color:var(--muted);margin-bottom:28px}
+.land-footer{background:var(--surface);border-top:1px solid var(--border);padding:22px 48px;display:flex;align-items:center;justify-content:space-between}
+.footer-copy{font-size:12px;color:var(--dim)}
+.footer-links{display:flex;gap:20px}
+.footer-link{font-size:12px;color:var(--dim);cursor:pointer;transition:color .15s;background:none;border:none;font-family:var(--font)}
+.footer-link:hover{color:var(--muted)}
+.level-tab{padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .15s}
+.level-tab:hover{color:var(--text);border-color:var(--blue)}
+.level-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* ── MULTI-PORTAL AUTH WRAPPERS ── */
+#auth-client,#auth-admin,#auth-consultant{display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;flex-direction:column}
+.auth-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:20px;transition:color .15s;background:none;border:none;font-family:var(--font)}
+.auth-back:hover{color:var(--text)}
+.portal-badge{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;margin-bottom:14px;width:fit-content}
+@media(max-width:768px){
+  .land-nav{padding:0 20px}.land-hero{padding:60px 20px 40px}
+  .hero-title{font-size:36px}.steps-grid{grid-template-columns:1fr 1fr}
+  .disc-grid{grid-template-columns:1fr 1fr}.guar-grid{grid-template-columns:1fr}
+  .land-section{padding:48px 20px}.land-footer{flex-direction:column;gap:12px;text-align:center}
+  .land-nav-links{gap:14px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING (gabrielacademics.co.za) ═══ -->
+<div id="landing">
+  <nav class="land-nav">
+    <div class="land-logo"><div class="land-logo-mark">GA</div><div class="land-logo-name">Gabriel Academics</div></div>
+    <div class="land-nav-links">
+      <button class="land-nav-link" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How It Works</button>
+      <button class="land-nav-link" onclick="document.getElementById('disciplines').scrollIntoView({behavior:'smooth'})">Disciplines</button>
+      <button class="land-nav-link" onclick="document.getElementById('guarantee').scrollIntoView({behavior:'smooth'})">Our Guarantee</button>
+      <button class="land-nav-cta" onclick="showPortal('client')">Get Started</button>
+    </div>
+  </nav>
+  <section class="land-hero">
+    <div class="hero-glow"></div>
+    <div class="hero-eyebrow">⭐ Trusted by students from Grade R to PhD across South Africa</div>
+    <h1 class="hero-title">Academic Excellence,<br><span>Delivered to You</span></h1>
+    <p class="hero-sub">Professional academic assistance from Primary School through to Postgraduate level. Confidential. Expert. On time.</p>
+    <div class="hero-cta-row">
+      <button class="btn-hero-primary" onclick="showPortal('client')">Submit Your Request</button>
+      <button class="btn-hero-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+    </div>
+    <div class="hero-trust">
+      <div class="trust-item"><span class="trust-dot"></span> 100% Confidential</div>
+      <div class="trust-item"><span class="trust-dot"></span> Verified Experts Only</div>
+      <div class="trust-item"><span class="trust-dot"></span> Quality Guaranteed</div>
+      <div class="trust-item"><span class="trust-dot"></span> On-Time Delivery</div>
+    </div>
+  </section>
+  <div id="how" class="land-divider">
+    <div class="land-section">
+      <div class="sec-eyebrow">Simple Process</div>
+      <div class="sec-title">How It Works</div>
+      <div class="sec-sub">Four steps from request to delivery — we handle everything in between.</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">1</div><div class="step-title">Submit Your Request</div><div class="step-body">Create a free account and describe your assignment — topic, level, pages, deadline and instructions.</div></div>
+        <div class="step-card"><div class="step-num">2</div><div class="step-title">We Match an Expert</div><div class="step-body">Gabriel Academics selects the most qualified consultant from our vetted panel. You never deal with them directly.</div></div>
+        <div class="step-card"><div class="step-num">3</div><div class="step-title">Quality Review</div><div class="step-body">Every submission passes our internal quality check before it reaches you. No shortcuts.</div></div>
+        <div class="step-card"><div class="step-num">4</div><div class="step-title">Secure Delivery</div><div class="step-body">You receive your completed work from Gabriel Academics. Rate the service and request revisions if needed.</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="disciplines">
+    <div class="land-section">
+      <div class="sec-eyebrow">Who We Serve</div>
+      <div class="sec-title">Every Level. Every Subject.</div>
+      <div class="sec-sub">From primary school homework to doctoral dissertations — our verified consultants cover every academic stage and discipline.</div>
+
+      <!-- Level tabs -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:32px;margin-bottom:24px" id="level-tabs">
+        <button class="level-tab active" onclick="switchLevel('primary')">🏫 Primary School</button>
+        <button class="level-tab" onclick="switchLevel('secondary')">🎒 Secondary School</button>
+        <button class="level-tab" onclick="switchLevel('undergrad')">🎓 Undergraduate</button>
+        <button class="level-tab" onclick="switchLevel('postgrad')">📜 Postgraduate</button>
+      </div>
+
+      <!-- Primary -->
+      <div id="level-primary" class="level-panel">
+        <div class="level-banner" style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:28px">🏫</span>
+          <div><div style="font-size:14px;font-weight:600;color:var(--green)">Primary School</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Grade R – Grade 7 · Ages 5–13</div></div>
+        </div>
+        <div class="disc-grid">
+          <div class="disc-card"><div class="disc-icon">✏️</div><div><div class="disc-name">English & Literacy</div><div class="disc-sub">Reading · Writing · Comprehension · Creative Writing</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🔢</div><div><div class="disc-name">Mathematics</div><div class="disc-sub">Numeracy · Problem Solving · Mental Maths</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🌍</div><div><div class="disc-name">Life Skills</div><div class="disc-sub">Social Studies · Environment · Health</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🔬</div><div><div class="disc-name">Natural Sciences</div><div class="disc-sub">Basic Science · Technology · Discovery</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🗣️</div><div><div class="disc-name">Home Language</div><div class="disc-sub">Zulu · Afrikaans · Sotho · Xhosa + more</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🎨</div><div><div class="disc-name">Arts & Crafts Projects</div><div class="disc-sub">Creative projects · School assignments · Portfolios</div></div></div>
+        </div>
+      </div>
+
+      <!-- Secondary -->
+      <div id="level-secondary" class="level-panel" style="display:none">
+        <div class="level-banner" style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:28px">🎒</span>
+          <div><div style="font-size:14px;font-weight:600;color:var(--blue)">Secondary School</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Grade 8 – Grade 12 · Matric & IEB</div></div>
+        </div>
+        <div class="disc-grid">
+          <div class="disc-card"><div class="disc-icon">📐</div><div><div class="disc-name">Mathematics & Stats</div><div class="disc-sub">Pure Maths · Maths Lit · Statistics</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🔭</div><div><div class="disc-name">Physical Sciences</div><div class="disc-sub">Physics · Chemistry · Combined Science</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🧬</div><div><div class="disc-name">Life Sciences</div><div class="disc-sub">Biology · Human Bio · Environmental</div></div></div>
+          <div class="disc-card"><div class="disc-icon">✍️</div><div><div class="disc-name">English & Languages</div><div class="disc-sub">Essays · Literature · FAL · HL · Oral Prep</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📊</div><div><div class="disc-name">Accounting</div><div class="disc-sub">Financial Statements · Ledgers · Year-end</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🗺️</div><div><div class="disc-name">Geography & History</div><div class="disc-sub">Map Work · Climate · SA History · World Affairs</div></div></div>
+          <div class="disc-card"><div class="disc-icon">💻</div><div><div class="disc-name">IT & CAT</div><div class="disc-sub">Programming · Delphi · HTML · Spreadsheets</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🏛️</div><div><div class="disc-name">Business Studies & EMS</div><div class="disc-sub">Entrepreneurship · Marketing · Management</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📝</div><div><div class="disc-name">Matric Exam Prep</div><div class="disc-sub">NSC · IEB · Trial Papers · Revision Packs</div></div></div>
+        </div>
+      </div>
+
+      <!-- Undergraduate -->
+      <div id="level-undergrad" class="level-panel" style="display:none">
+        <div class="level-banner" style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:28px">🎓</span>
+          <div><div style="font-size:14px;font-weight:600;color:var(--gold)">Undergraduate</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Diploma · Degree · BTech · Advanced Certificate</div></div>
+        </div>
+        <div class="disc-grid">
+          <div class="disc-card"><div class="disc-icon">⚖️</div><div><div class="disc-name">Law</div><div class="disc-sub">LLB · Constitutional · Contract · Criminal</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📊</div><div><div class="disc-name">Commerce & Finance</div><div class="disc-sub">BCom · Accounting · Economics · Banking</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🏢</div><div><div class="disc-name">Business & Management</div><div class="disc-sub">Strategy · HRM · Marketing · Operations</div></div></div>
+          <div class="disc-card"><div class="disc-icon">💻</div><div><div class="disc-name">IT & Computer Science</div><div class="disc-sub">Programming · Networks · Database · AI</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🏥</div><div><div class="disc-name">Health Sciences</div><div class="disc-sub">Nursing · Pharmacy · Radiography · EMS</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📐</div><div><div class="disc-name">Engineering</div><div class="disc-sub">Civil · Electrical · Mechanical · Chemical</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🧠</div><div><div class="disc-name">Social Sciences</div><div class="disc-sub">Psychology · Sociology · Social Work · Comm</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📚</div><div><div class="disc-name">Education</div><div class="disc-sub">BEd · PGCE · Early Childhood · Foundation Phase</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🎨</div><div><div class="disc-name">Humanities & Arts</div><div class="disc-sub">History · Philosophy · Media · Language Studies</div></div></div>
+        </div>
+      </div>
+
+      <!-- Postgraduate -->
+      <div id="level-postgrad" class="level-panel" style="display:none">
+        <div class="level-banner" style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:28px">📜</span>
+          <div><div style="font-size:14px;font-weight:600;color:var(--purple)">Postgraduate</div><div style="font-size:12px;color:var(--muted);margin-top:3px">Honours · Masters · MBA · PhD · LLM · Professional Doctorates</div></div>
+        </div>
+        <div class="disc-grid">
+          <div class="disc-card"><div class="disc-icon">🔬</div><div><div class="disc-name">Research & Methodology</div><div class="disc-sub">Proposals · Literature Reviews · Chapters 1–5</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📉</div><div><div class="disc-name">Data Analysis</div><div class="disc-sub">SPSS · R · Stata · Qualitative · Thematic</div></div></div>
+          <div class="disc-card"><div class="disc-icon">⚖️</div><div><div class="disc-name">Law</div><div class="disc-sub">LLM · Dissertation · Corporate · International</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📊</div><div><div class="disc-name">Finance & Economics</div><div class="disc-sub">CA(SA) · CFA · MBA · Financial Modelling</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🏥</div><div><div class="disc-name">Health Sciences</div><div class="disc-sub">Clinical Research · Public Health · MPhil</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🏢</div><div><div class="disc-name">Business & Strategy</div><div class="disc-sub">MBA · DBA · Case Studies · Business Plans</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📚</div><div><div class="disc-name">Education</div><div class="disc-sub">MEd · DEd · Curriculum Design · Leadership</div></div></div>
+          <div class="disc-card"><div class="disc-icon">🧠</div><div><div class="disc-name">Psychology & Social Work</div><div class="disc-sub">MA Psych · MSW · Clinical · Research</div></div></div>
+          <div class="disc-card"><div class="disc-icon">📐</div><div><div class="disc-name">Engineering & IT</div><div class="disc-sub">MEng · MTech · AI · Systems · Networks</div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div id="guarantee" class="land-divider">
+    <div class="land-section">
+      <div class="sec-eyebrow">Our Promise</div>
+      <div class="sec-title">The Gabriel Guarantee</div>
+      <div class="sec-sub">Three non-negotiables we built this platform on.</div>
+      <div class="guar-grid">
+        <div class="guar-card"><div class="guar-icon">🔒</div><div class="guar-title">Complete Confidentiality</div><div class="guar-body">Your identity is never shared with any consultant. You are known only by a reference code. All work flows through Gabriel Academics.</div></div>
+        <div class="guar-card"><div class="guar-icon">🎓</div><div class="guar-title">Verified Experts</div><div class="guar-body">Every consultant is personally vetted — qualifications verified, background checked, performance monitored. No exceptions.</div></div>
+        <div class="guar-card"><div class="guar-icon">✅</div><div class="guar-title">Quality Before Delivery</div><div class="guar-body">Nothing reaches you without passing our internal QA review. If it falls short, it goes back for revision first.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="cta-band">
+    <div class="cta-band-title">Ready to get started?</div>
+    <div class="cta-band-sub">Create your free account in under 2 minutes. No payment until we confirm your quote.</div>
+    <button class="btn-hero-primary" onclick="showPortal('client')">Create Free Account</button>
+  </div>
+  <footer class="land-footer">
+    <div class="footer-copy">© 2026 Gabriel Academics (Pty) Ltd · All rights reserved</div>
+    <div class="footer-links">
+      <button class="footer-link">Privacy Policy</button>
+      <button class="footer-link">Terms of Service</button>
+      <button class="footer-link" onclick="showPortal('client')">Client Login</button>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══ CLIENT AUTH (gabrielacademics.co.za — public) ═══ -->
+<div id="auth-client">
+  <button class="auth-back" onclick="showLanding()">← Back to gabrielacademics.co.za</button>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark" style="background:var(--gold);color:#0A0F1E">GA</div>
+      <div><div class="auth-logo-text">Gabriel Academics</div><div class="auth-logo-sub">Client Portal</div></div>
+    </div>
+    <div id="auth-error" class="error-msg"></div>
+    <div id="auth-success" class="success-msg"></div>
+    <div id="signin-form">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to track your orders</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="setAuthTab('signin')">Sign In</button>
+        <button class="auth-tab" onclick="setAuthTab('signup')">Register</button>
+      </div>
+      <div class="form-group"><label class="form-label">Email address</label><input id="signin-email" class="form-input" type="email" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Password</label><input id="signin-password" class="form-input" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-gold btn-block" onclick="signIn()" id="signin-btn">Sign In</button>
+    </div>
+    <div id="signup-form" style="display:none">
+      <div class="auth-title">Create account</div>
+      <div class="auth-sub">Get academic assistance today</div>
+      <div class="auth-tabs">
+        <button class="auth-tab" onclick="setAuthTab('signin')">Sign In</button>
+        <button class="auth-tab active" onclick="setAuthTab('signup')">Register</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input id="signup-firstname" class="form-input" placeholder="John"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input id="signup-lastname" class="form-input" placeholder="Doe"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email address</label><input id="signup-email" class="form-input" type="email" placeholder="you@example.com"></div>
+      <div class="form-group"><label class="form-label">Password</label><input id="signup-password" class="form-input" type="password" placeholder="At least 8 characters"></div>
+      <div class="form-group"><label class="form-label">I am registering as a</label>
+        <select id="signup-role" class="form-input">
+          <option value="client">Client — I need academic assistance</option>
+          <option value="consultant" style="display:none">Consultant</option>
+        </select>
+      </div>
+      <div id="consultant-fields" style="display:none">
+        <div class="form-group"><label class="form-label">Highest Qualification</label><input id="signup-qualification" class="form-input" placeholder="e.g. PhD Sociology, CA(SA), LLM"></div>
+        <div class="form-group"><label class="form-label">Subject Areas (comma-separated)</label><input id="signup-subjects" class="form-input" placeholder="e.g. Finance, Economics, Law"></div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="signUp()" id="signup-btn">Create Account</button>
+      <div class="auth-role-note">🔒 Your identity is protected. No consultant will ever know who you are.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN AUTH (gabrielacademics.co.za/gax — hidden) ═══ -->
+<div id="auth-admin">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark" style="background:rgba(245,158,11,.15);color:var(--gold)">GA</div>
+      <div><div class="auth-logo-text">Gabriel Academics</div><div class="auth-logo-sub">Operations Centre</div></div>
+    </div>
+    <div class="portal-badge" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--gold)">🛡 Admin Access Only</div>
+    <div id="admin-auth-error" class="error-msg"></div>
+    <div class="auth-title">Operations Sign In</div>
+    <div class="auth-sub" style="margin-bottom:20px">Authorised personnel only</div>
+    <div class="form-group"><label class="form-label">Email</label><input id="admin-email" class="form-input" type="email" placeholder="admin@gabrielacademics.co.za" autocomplete="email"></div>
+    <div class="form-group"><label class="form-label">Password</label><input id="admin-password" class="form-input" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-gold btn-block" onclick="adminSignIn()" id="admin-signin-btn">Sign In to Operations</button>
+  </div>
+</div>
+
+<!-- ═══ CONSULTANT AUTH (gabrielacademics.co.za/connect — private) ═══ -->
+<div id="auth-consultant">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark" style="background:rgba(139,92,246,.15);color:var(--purple)">GA</div>
+      <div><div class="auth-logo-text">Gabriel Academics</div><div class="auth-logo-sub">Consultant Portal</div></div>
+    </div>
+    <div class="portal-badge" style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:var(--purple)">🎓 Consultant Access</div>
+    <div id="con-auth-error" class="error-msg"></div>
+    <div id="con-auth-success" class="success-msg"></div>
+    <div id="con-signin-panel">
+      <div class="auth-title">Consultant Sign In</div>
+      <div class="auth-sub" style="margin-bottom:18px">Access your job board</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="conAuthTab('in')">Sign In</button>
+        <button class="auth-tab" onclick="conAuthTab('up')">Register</button>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input id="con-email" class="form-input" type="email" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Password</label><input id="con-password" class="form-input" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-primary btn-block" onclick="consultantSignIn()" id="con-signin-btn">Sign In</button>
+    </div>
+    <div id="con-signup-panel" style="display:none">
+      <div class="auth-title">Join as Consultant</div>
+      <div class="auth-sub" style="margin-bottom:18px">Apply to join our expert panel</div>
+      <div class="auth-tabs">
+        <button class="auth-tab" onclick="conAuthTab('in')">Sign In</button>
+        <button class="auth-tab active" onclick="conAuthTab('up')">Register</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input id="con-first" class="form-input" placeholder="Jane"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input id="con-last" class="form-input" placeholder="Smith"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input id="con-reg-email" class="form-input" type="email"></div>
+      <div class="form-group"><label class="form-label">Password</label><input id="con-reg-password" class="form-input" type="password" placeholder="At least 8 characters"></div>
+      <div class="form-group"><label class="form-label">Highest Qualification *</label><input id="con-qual" class="form-input" placeholder="e.g. PhD Sociology, CA(SA), LLM"></div>
+      <div class="form-group"><label class="form-label">Subject Areas *</label><input id="con-subjects" class="form-input" placeholder="e.g. Finance, Economics, Law"></div>
+      <div class="form-group"><label class="form-label">Brief Bio</label><textarea id="con-bio" class="form-input" rows="2" placeholder="Your academic background..."></textarea></div>
+      <button class="btn btn-primary btn-block" onclick="consultantSignUp()" id="con-signup-btn">Apply to Join</button>
+      <div style="font-size:11px;color:var(--dim);margin-top:10px;text-align:center">Your account will be reviewed and verified by Gabriel Academics before activation.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════ -->
+<div id="app-shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark" id="brand-mark" style="background:rgba(245,158,11,.15);color:var(--gold)">GA</div>
+      <div>
+        <div class="brand-name">Gabriel Academics</div>
+        <div class="brand-role" id="topbar-role"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="notif-btn" onclick="toggleNotifPanel()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-badge" id="notif-count" style="display:none">0</span>
+      </div>
+      <div class="user-chip" onclick="signOut()">
+        <div class="user-av" id="user-av" style="background:rgba(245,158,11,.2);color:var(--gold)">G</div>
+        <span class="user-name" id="user-name">User</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--muted)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main"></div>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div id="notif-panel" class="notif-panel" style="display:none"></div>
+
+<!-- Modal Container -->
+<div id="modal"></div>
+
+<!-- Toast Container -->
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://vgxjikgmttwflqxezbxd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable__O9Bj0JC-l3KTo0QBF10YQ_ZP-DBVMd';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+let currentPage = '';
+
+// ═══ UTILITIES ═══
+function fmt(n){return'R'+parseFloat(n||0).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-ZA',{day:'2-digit',month:'short',year:'numeric'})}
+function daysLeft(d){if(!d)return'—';const diff=Math.ceil((new Date(d)-new Date())/(1000*60*60*24));return diff<=0?'Overdue!':diff+' day'+(diff===1?'':'s')}
+function daysLeftColor(d){if(!d)return'var(--muted)';const diff=Math.ceil((new Date(d)-new Date())/(1000*60*60*24));return diff<=2?'var(--red)':diff<=5?'var(--gold)':'var(--muted)'}
+function statusLabel(s){const m={new:'New',posted:'Posted',pending:'Awaiting Consultant',active:'In Progress',submitted:'Submitted',qa_review:'QA Review',qa_failed:'QA Failed',delivered:'Delivered',disputed:'Disputed',cancelled:'Cancelled'};return m[s]||s}
+function statusBadge(s){return`<span class="badge badge-${s}"><span class="dot dot-${s==='delivered'?'green':s==='active'?'blue':s==='qa_review'||s==='submitted'?'purple':s==='qa_failed'||s==='new'?'red':'gold'}"></span>${statusLabel(s)}</span>`}
+function icon(name){const icons={dashboard:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',jobs:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',pipeline:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',clients:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',consultants:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',payments:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',payouts:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',qa:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',ratings:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',settings:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',newjob:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',myjobs:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',messages:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',message:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',available:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',earnings:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',profile:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',shield:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',upload:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>',download:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>',check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',send:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'};return icons[name]||''}
+
+function toast(msg, type='info'){
+  const el=document.createElement('div');
+  el.className=`toast-item ${type}`;
+  el.innerHTML=`${type==='success'?'✓':type==='error'?'✕':'ℹ'} ${msg}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+function showModal(html){document.getElementById('modal').innerHTML=html}
+function closeModal(){document.getElementById('modal').innerHTML=''}
+
+// ═══ AUTH ═══
+document.getElementById('signup-role').addEventListener('change',function(){
+  document.getElementById('consultant-fields').style.display=this.value==='consultant'?'block':'none';
+});
+
+function setAuthTab(tab){
+  document.getElementById('signin-form').style.display=tab==='signin'?'block':'none';
+  document.getElementById('signup-form').style.display=tab==='signup'?'block':'none';
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='signin')||(i===1&&tab==='signup')));
+  document.getElementById('auth-error').style.display='none';
+}
+
+function showAuthError(msg){const el=document.getElementById('auth-error');el.textContent=msg;el.style.display='block'}
+function showAuthSuccess(msg){const el=document.getElementById('auth-success');el.textContent=msg;el.style.display='block'}
+
+async function signIn(){
+  const btn=document.getElementById('signin-btn');
+  const email=document.getElementById('signin-email').value.trim();
+  const pass=document.getElementById('signin-password').value;
+  const errEl=document.getElementById('auth-error');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return}
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.innerHTML='Sign In';btn.disabled=false;
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return}
+  // Enforce: only clients (and admins who somehow land here) use this portal
+  const {data:prof}=await sb.from('profiles').select('role').eq('id',data.user.id).single();
+  if(prof?.role==='consultant'){errEl.textContent='Consultants must sign in at gabrielacademics.co.za/connect';errEl.style.display='block';await sb.auth.signOut();return}
+  await loadApp(data.user);
+}
+
+async function signUp(){
+  const btn=document.getElementById('signup-btn');
+  const email=document.getElementById('signup-email').value.trim();
+  const pass=document.getElementById('signup-password').value;
+  const role='client'; // Client portal only — consultants register at /connect
+  const first=document.getElementById('signup-firstname').value.trim();
+  const last=document.getElementById('signup-lastname').value.trim();
+  const name=`${first} ${last}`.trim();
+  if(!email||!pass||!name){showAuthError('Please fill in all required fields.');return}
+  if(pass.length<8){showAuthError('Password must be at least 8 characters.');return}
+  btn.innerHTML='<span class="spinner"></span> Creating account...';btn.disabled=true;
+  const meta={role,display_name:name};
+  if(role==='consultant'){
+    meta.qualification=document.getElementById('signup-qualification').value.trim();
+    meta.subject_areas=document.getElementById('signup-subjects').value.split(',').map(s=>s.trim()).filter(Boolean);
+  }
+  const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:meta}});
+  btn.innerHTML='Create Account';btn.disabled=false;
+  if(error){showAuthError(error.message);return}
+  showAuthSuccess('Account created! Please check your email to verify, then sign in.');
+}
+
+async function signOut(){
+  const role=currentProfile?.role||'client';
+  await sb.auth.signOut();
+  currentUser=null;currentProfile=null;
+  document.getElementById('app-shell').style.display='none';
+  if(role==='admin')showPortal('admin');
+  else if(role==='consultant')showPortal('consultant');
+  else showLanding();
+}
+
+async function loadApp(user){
+  currentUser=user;
+  // Load profile
+  const {data:prof}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  currentProfile=prof||{role:user.user_metadata?.role||'client',display_name:user.user_metadata?.display_name||user.email,id:user.id};
+  ['landing','auth-client','auth-admin','auth-consultant'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  });
+  document.getElementById('app-shell').style.display='flex';
+  const role=currentProfile.role;
+  const initials=(currentProfile.display_name||'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('user-name').textContent=currentProfile.display_name||currentProfile.email||'User';
+  document.getElementById('topbar-role').textContent=role==='admin'?'Operations Centre':role==='client'?'Client Portal':'Consultant Portal';
+  const av=document.getElementById('user-av');
+  av.textContent=initials;
+  const bm=document.getElementById('brand-mark');
+  if(bm){
+    if(role==='admin'){av.style.background='rgba(245,158,11,.2)';av.style.color='var(--gold)';bm.style.background='rgba(245,158,11,.15)';bm.style.color='var(--gold)'}
+    else if(role==='client'){av.style.background='rgba(59,130,246,.2)';av.style.color='var(--blue)';bm.style.background='rgba(59,130,246,.15)';bm.style.color='var(--blue)'}
+    else{av.style.background='rgba(139,92,246,.2)';av.style.color='var(--purple)';bm.style.background='rgba(139,92,246,.15)';bm.style.color='var(--purple)'}
+  }
+  av.style.background=role==='admin'?'rgba(245,158,11,.2)':role==='client'?'rgba(59,130,246,.2)':'rgba(139,92,246,.2)';
+  av.style.color=role==='admin'?'var(--gold)':role==='client'?'var(--blue)':'var(--purple)';
+  buildSidebar(role);
+  loadNotifications();
+  startRealtime();
+  navigate('dashboard');
+}
+
+// ═══ SIDEBAR ═══
+const navConfig={
+  admin:[
+    {section:'Command',items:[{id:'dashboard',label:'Dashboard'},{id:'jobs',label:'All Jobs',badge:'jobs'},{id:'pipeline',label:'Pipeline'}]},
+    {section:'Stakeholders',items:[{id:'clients',label:'Clients'},{id:'consultants',label:'Consultants'}]},
+    {section:'Finances',items:[{id:'payments',label:'Payments In'},{id:'payouts',label:'Payouts'}]},
+    {section:'Quality',items:[{id:'qa',label:'QA Review',badge:'qa'},{id:'ratings',label:'Ratings'}]},
+    {section:'Communications',items:[{id:'messages',label:'Messages'}]},
+    {section:'',items:[{id:'settings',label:'Settings'}]}
+  ],
+  client:[
+    {section:'My Portal',items:[{id:'dashboard',label:'Dashboard'},{id:'newjob',label:'New Request'},{id:'myjobs',label:'My Orders'}]},
+    {section:'Account',items:[{id:'payments',label:'My Payments'},{id:'messages',label:'Messages'},{id:'profile',label:'My Profile'}]}
+  ],
+  consultant:[
+    {section:'My Work',items:[{id:'dashboard',label:'Dashboard'},{id:'available',label:'Available Jobs',badge:'available'},{id:'active',label:'Active Jobs'},{id:'submitted',label:'Submitted'}]},
+    {section:'Earnings',items:[{id:'earnings',label:'My Earnings'}]},
+    {section:'',items:[{id:'profile',label:'My Profile'}]}
+  ]
+};
+
+let jobCounts={jobs:0,qa:0,available:0};
+
+function buildSidebar(role){
+  const nav=navConfig[role]||[];
+  let html='';
+  nav.forEach(sec=>{
+    html+=`<div class="nav-section">`;
+    if(sec.section)html+=`<div class="nav-label">${sec.section}</div>`;
+    sec.items.forEach(item=>{
+      const badgeKey=item.badge;
+      const cnt=badgeKey?jobCounts[badgeKey]||0:0;
+      const badgeHtml=cnt>0?`<span class="nav-badge${badgeKey==='qa'?' nav-badge-red':''}">${cnt}</span>`:'';
+      html+=`<div class="nav-item" id="nav-${item.id}" onclick="navigate('${item.id}')">${icon(item.id)||icon('jobs')} ${item.label}${badgeHtml}</div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('sidebar').innerHTML=html;
+}
+
+function setActiveNav(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const el=document.getElementById('nav-'+page);
+  if(el)el.classList.add('active');
+}
+
+function navigate(page){
+  currentPage=page;
+  setActiveNav(page);
+  const role=currentProfile?.role||'client';
+  const fn={
+    admin:{dashboard:renderAdminDashboard,jobs:renderAdminJobs,pipeline:renderPipeline,clients:renderClients,consultants:renderConsultants,payments:renderAdminPayments,payouts:renderPayouts,qa:renderQA,ratings:renderRatings,settings:renderSettings},
+    client:{dashboard:renderClientDashboard,newjob:renderNewJob,myjobs:renderMyJobs,payments:renderClientPayments,messages:renderClientMessages,profile:renderProfile},
+    consultant:{dashboard:renderConsultantDashboard,available:renderAvailableJobs,active:renderActiveJobs,submitted:renderSubmittedJobs,earnings:renderEarnings,profile:renderProfile}
+  };
+  const f=fn[role]?.[page];
+  if(f)f();else document.getElementById('main').innerHTML=`<div class="empty"><div class="empty-icon">🚧</div><div class="empty-text">Page coming soon</div></div>`;
+}
+
+// ═══ NOTIFICATIONS ═══
+async function loadNotifications(){
+  const {data}=await sb.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(20);
+  const unread=(data||[]).filter(n=>!n.read_at).length;
+  const cnt=document.getElementById('notif-count');
+  if(unread>0){cnt.textContent=unread;cnt.style.display='block'}else cnt.style.display='none';
+}
+
+function toggleNotifPanel(){
+  const panel=document.getElementById('notif-panel');
+  if(panel.style.display==='none'){renderNotifPanel();panel.style.display='block'}
+  else panel.style.display='none';
+}
+
+async function renderNotifPanel(){
+  const {data}=await sb.from('notifications').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false}).limit(15);
+  const panel=document.getElementById('notif-panel');
+  if(!data||!data.length){panel.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No notifications</div>';return}
+  panel.innerHTML=`<div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Notifications</span><button class="btn btn-ghost btn-xs" onclick="markAllRead()">Mark all read</button></div>`+
+    data.map(n=>`<div class="notif-item${!n.read_at?' unread':''}" onclick="markNotifRead('${n.id}')">
+      <div class="notif-title">${n.title}</div>
+      <div class="notif-body">${n.body}</div>
+      <div class="notif-time">${fmtDate(n.created_at)}</div>
+    </div>`).join('');
+}
+
+async function markAllRead(){
+  await sb.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',currentUser.id).is('read_at',null);
+  document.getElementById('notif-count').style.display='none';
+  renderNotifPanel();
+}
+
+async function markNotifRead(id){
+  await sb.from('notifications').update({read_at:new Date().toISOString()}).eq('id',id);
+  loadNotifications();
+}
+
+document.addEventListener('click',function(e){
+  const panel=document.getElementById('notif-panel');
+  if(!panel.contains(e.target)&&!e.target.closest('.notif-btn'))panel.style.display='none';
+});
+
+// ═══════════════════════════════
+// ADMIN PAGES
+// ═══════════════════════════════
+
+async function renderAdminDashboard(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const [{data:jobs},{data:clients},{data:consultants},{data:payments}]=await Promise.all([
+    sb.from('jobs').select('*').order('created_at',{ascending:false}).limit(8),
+    sb.from('profiles').select('id').eq('role','client'),
+    sb.from('profiles').select('id').eq('role','consultant'),
+    sb.from('payments').select('amount,status')
+  ]);
+  const activeJobs=(jobs||[]).filter(j=>['active','posted','pending','qa_review','submitted'].includes(j.status)).length;
+  const revenue=(payments||[]).filter(p=>p.status==='cleared').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const qaCount=(jobs||[]).filter(j=>j.status==='qa_review').length;
+  jobCounts.jobs=(jobs||[]).length;jobCounts.qa=qaCount;
+  buildSidebar('admin');setActiveNav('dashboard');
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Command Centre</div><div class="page-sub">Full platform overview — ${new Date().toLocaleDateString('en-ZA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Active Jobs</div><div class="stat-value" style="color:var(--gold)">${activeJobs}</div></div>
+  <div class="stat-card"><div class="stat-label">Revenue Cleared</div><div class="stat-value" style="color:var(--green)">${fmt(revenue)}</div></div>
+  <div class="stat-card"><div class="stat-label">Total Clients</div><div class="stat-value" style="color:var(--blue)">${(clients||[]).length}</div></div>
+  <div class="stat-card"><div class="stat-label">Consultants</div><div class="stat-value" style="color:var(--purple)">${(consultants||[]).length}</div></div>
+</div>
+<div class="section-header"><span class="section-title">Recent Jobs</span><button class="btn btn-gold btn-sm" onclick="openPostJobModal()">${icon('newjob')} Post Job</button></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Assignment</th><th>Subject</th><th>Deadline</th><th>Budget</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+<tbody>${(jobs||[]).map(j=>`<tr>
+<td class="mono" style="color:var(--blue)">${j.job_ref||'—'}</td>
+<td style="max-width:180px"><div style="font-size:12px;line-height:1.4">${j.title}</div><div style="font-size:11px;color:var(--dim)">${j.level||''}</div></td>
+<td style="font-size:12px">${j.subject||'—'}</td>
+<td style="font-size:12px;color:${daysLeftColor(j.deadline)}">${daysLeft(j.deadline)}</td>
+<td style="font-weight:600;color:var(--green)">${fmt(j.client_budget)}</td>
+<td><span class="rate-pill">${j.consultant_rate||60}%</span></td>
+<td>${statusBadge(j.status)}</td>
+<td><button class="btn btn-ghost btn-xs" onclick="openJobDetailAdmin('${j.id}')">View</button></td>
+</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No jobs yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderAdminJobs(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">All Jobs</div><div class="page-sub">Complete job registry — ${(jobs||[]).length} total</div></div>
+<div style="display:flex;gap:8px;margin-bottom:16px">
+<button class="btn btn-gold btn-sm" onclick="openPostJobModal()">${icon('newjob')} Post Job Manually</button>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Title</th><th>Level</th><th>Pages</th><th>Deadline</th><th>Budget</th><th>Consultant Earns</th><th>Gabriel Gets</th><th>Status</th><th></th></tr></thead>
+<tbody>${(jobs||[]).map(j=>`<tr>
+<td class="mono" style="color:var(--blue)">${j.job_ref||'—'}</td>
+<td style="max-width:160px;font-size:12px">${j.title}</td>
+<td style="font-size:12px;color:var(--muted)">${j.level||'—'}</td>
+<td style="font-size:12px">${j.pages||'—'}</td>
+<td style="font-size:12px;color:${daysLeftColor(j.deadline)}">${daysLeft(j.deadline)}</td>
+<td style="color:var(--green);font-weight:600">${fmt(j.client_budget)}</td>
+<td style="color:var(--gold)">${fmt(j.consultant_payout)}</td>
+<td style="color:var(--blue)">${fmt(j.gabriel_margin)}</td>
+<td>${statusBadge(j.status)}</td>
+<td><button class="btn btn-ghost btn-xs" onclick="openJobDetailAdmin('${j.id}')">View</button></td>
+</tr>`).join('')||'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">No jobs yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderPipeline(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').order('created_at',{ascending:false});
+  const stages=[{key:'new',label:'New',color:'var(--red)'},{key:'posted',label:'Posted',color:'var(--gold)'},{key:'pending',label:'Awaiting Consultant',color:'var(--gold)'},{key:'active',label:'In Progress',color:'var(--blue)'},{key:'submitted',label:'Submitted',color:'var(--purple)'},{key:'qa_review',label:'QA Review',color:'var(--purple)'},{key:'delivered',label:'Delivered',color:'var(--green)'}];
+  const grouped={};stages.forEach(s=>{grouped[s.key]=(jobs||[]).filter(j=>j.status===s.key)});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Job Pipeline</div><div class="page-sub">Visual mission board</div></div>
+<div class="pipeline">
+${stages.map(s=>`
+<div class="pipe-col">
+<div class="pipe-head" style="color:${s.color}">${s.label} <span class="pipe-count">${grouped[s.key].length}</span></div>
+${grouped[s.key].map(j=>`<div class="pipe-card" onclick="openJobDetailAdmin('${j.id}')">
+<div class="pipe-ref">${j.job_ref||'—'}</div>
+<div class="pipe-title">${j.title}</div>
+<div class="pipe-meta"><span>${j.subject||'—'}</span><span style="color:var(--gold)">${fmt(j.client_budget)}</span></div>
+</div>`).join('')||`<div style="border:1px dashed var(--border);border-radius:7px;padding:14px;text-align:center;color:var(--dim);font-size:11px">Empty</div>`}
+</div>`).join('')}
+</div>`;
+}
+
+async function renderClients(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:clients}=await sb.from('profiles').select('*').eq('role','client').order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Clients</div><div class="page-sub">${(clients||[]).length} registered clients — identities protected from consultants</div></div>
+<div class="shield-banner">${icon('shield')}<div><strong>Anonymisation Firewall Active</strong>Client real names and emails are never visible to consultants. Only masked IDs are shown.</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Client ID</th><th>Name</th><th>Email</th><th>Joined</th><th>Verified</th><th></th></tr></thead>
+<tbody>${(clients||[]).map(c=>`<tr>
+<td class="mono" style="color:var(--blue)">${c.masked_id||'—'}</td>
+<td style="font-size:13px">${c.display_name||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${c.email||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(c.created_at)}</td>
+<td><span class="badge ${c.is_verified?'badge-delivered':'badge-pending'}">${c.is_verified?'Verified':'Pending'}</span></td>
+<td><button class="btn btn-ghost btn-xs">View</button></td>
+</tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No clients yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderConsultants(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:cons}=await sb.from('profiles').select('*').eq('role','consultant').order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Consultants</div><div class="page-sub">${(cons||[]).length} consultants — identities protected from clients</div></div>
+<div class="shield-banner">${icon('shield')}<div><strong>Anonymisation Firewall Active</strong>Consultant identities are never visible to clients.</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Consultant ID</th><th>Name</th><th>Qualification</th><th>Subjects</th><th>Verified</th><th></th></tr></thead>
+<tbody>${(cons||[]).map(c=>`<tr>
+<td class="mono" style="color:var(--purple)">${c.masked_id||'—'}</td>
+<td style="font-size:13px">${c.display_name||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${c.qualification||'—'}</td>
+<td style="font-size:12px;max-width:150px">${(c.subject_areas||[]).join(', ')||'—'}</td>
+<td><span class="badge ${c.is_verified?'badge-delivered':'badge-pending'}">${c.is_verified?'Verified':'Pending'}</span></td>
+<td><button class="btn btn-ghost btn-xs" onclick="toggleVerify('${c.id}',${c.is_verified})">${c.is_verified?'Unverify':'Verify'}</button></td>
+</tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No consultants yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function toggleVerify(id, current){
+  await sb.from('profiles').update({is_verified:!current}).eq('id',id);
+  toast(!current?'Consultant verified':'Consultant unverified','success');
+  renderConsultants();
+}
+
+async function renderAdminPayments(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:payments}=await sb.from('payments').select('*,jobs(job_ref,title),profiles(masked_id)').order('created_at',{ascending:false});
+  const cleared=(payments||[]).filter(p=>p.status==='cleared').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const pending=(payments||[]).filter(p=>p.status==='pending').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Payments Received</div><div class="page-sub">All incoming client payments</div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Cleared</div><div class="stat-value" style="color:var(--green)">${fmt(cleared)}</div></div>
+  <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--gold)">${fmt(pending)}</div></div>
+  <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" style="color:var(--blue)">${(payments||[]).length}</div></div>
+  <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value" style="color:var(--text)">${fmt(cleared+pending)}</div></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Job</th><th>Client</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th></th></tr></thead>
+<tbody>${(payments||[]).map(p=>`<tr>
+<td class="mono" style="color:var(--blue)">${p.payment_ref||'—'}</td>
+<td class="mono" style="font-size:12px">${p.jobs?.job_ref||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${p.profiles?.masked_id||'—'}</td>
+<td style="font-weight:600;color:var(--green)">${fmt(p.amount)}</td>
+<td style="font-size:12px">${p.method||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(p.created_at)}</td>
+<td><span class="badge badge-${p.status}">${p.status}</span></td>
+<td>${p.status==='pending'?`<button class="btn btn-xs btn-primary" onclick="clearPayment('${p.id}')">Clear</button>`:'—'}</td>
+</tr>`).join('')||'<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No payments yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function clearPayment(id){
+  await sb.from('payments').update({status:'cleared',paid_at:new Date().toISOString()}).eq('id',id);
+  toast('Payment marked as cleared','success');renderAdminPayments();
+}
+
+async function renderPayouts(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:payouts}=await sb.from('payouts').select('*,jobs(job_ref,client_budget,consultant_rate),profiles(masked_id,display_name)').order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Consultant Payouts</div><div class="page-sub">Earnings disbursed after QA clearance</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Job</th><th>Consultant</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+<tbody>${(payouts||[]).map(p=>`<tr>
+<td class="mono" style="color:var(--blue)">${p.payout_ref||'—'}</td>
+<td class="mono" style="font-size:12px">${p.jobs?.job_ref||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${p.profiles?.masked_id||'—'}</td>
+<td style="font-weight:600;color:var(--gold)">${fmt(p.amount)}</td>
+<td><span class="badge badge-${p.status}">${p.status}</span></td>
+<td>${p.status==='escrow'?`<button class="btn btn-xs btn-gold" onclick="releasePayout('${p.id}')">Release</button>`:'—'}</td>
+</tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No payouts yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function releasePayout(id){
+  await sb.from('payouts').update({status:'paid',paid_at:new Date().toISOString()}).eq('id',id);
+  toast('Payout released to consultant','success');renderPayouts();
+}
+
+async function renderQA(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').eq('status','qa_review').order('submitted_at',{ascending:true});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">QA Review Queue</div><div class="page-sub">${(jobs||[]).length} submission(s) awaiting your review</div></div>
+${(jobs||[]).length===0?`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">QA queue is clear</div></div>`:''}
+${(jobs||[]).map(j=>`
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div>
+      <div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:4px">${j.job_ref||'—'}</div>
+      <div style="font-size:15px;font-weight:600">${j.title}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">${j.level||''} · ${j.pages||'?'} pages · Submitted ${fmtDate(j.submitted_at)}</div>
+    </div>
+    ${statusBadge(j.status)}
+  </div>
+  ${j.submission_url?`<div style="margin-bottom:12px"><a href="${j.submission_url}" target="_blank" class="btn btn-ghost btn-sm">${icon('download')} Download Submission</a></div>`:'<div style="font-size:12px;color:var(--dim);margin-bottom:12px">No file uploaded yet</div>'}
+  <div class="form-group"><label class="form-label">QA Notes (optional — shown to consultant if failed)</label><textarea id="qa-notes-${j.id}" class="form-input" rows="2" placeholder="Notes for consultant..."></textarea></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" onclick="passQA('${j.id}')">${icon('check')} Pass QA & Deliver</button>
+    <button class="btn btn-danger btn-sm" onclick="failQA('${j.id}')">${icon('x')} Return to Consultant</button>
+  </div>
+</div>`).join('')}`;
+}
+
+async function passQA(jobId){
+  const notes=document.getElementById('qa-notes-'+jobId)?.value||'';
+  await sb.from('jobs').update({status:'delivered',qa_passed_at:new Date().toISOString(),qa_passed_by:currentUser.id,qa_notes:notes,delivered_at:new Date().toISOString()}).eq('id',jobId);
+  // Create payout record
+  const {data:job}=await sb.from('jobs').select('*').eq('id',jobId).single();
+  if(job){
+    await sb.from('payouts').insert({job_id:jobId,consultant_id:job.consultant_id,amount:job.consultant_payout});
+    // Notify client and consultant
+    if(job.client_id)await sb.from('notifications').insert({user_id:job.client_id,title:'Your order has been delivered',body:`Job ${job.job_ref} has passed QA and been delivered. Please review.`,type:'success'});
+    if(job.consultant_id)await sb.from('notifications').insert({user_id:job.consultant_id,title:'QA Passed — payout queued',body:`${job.job_ref} passed QA. Your payout of ${fmt(job.consultant_payout)} is in escrow.`,type:'success'});
+  }
+  toast('QA passed — job delivered to client','success');
+  renderQA();
+}
+
+async function failQA(jobId){
+  const notes=document.getElementById('qa-notes-'+jobId)?.value||'Revision required.';
+  await sb.from('jobs').update({status:'active',qa_notes:notes}).eq('id',jobId);
+  const {data:job}=await sb.from('jobs').select('*').eq('id',jobId).single();
+  if(job?.consultant_id)await sb.from('notifications').insert({user_id:job.consultant_id,title:'Revision required',body:`${job.job_ref} was returned for revision. Notes: ${notes}`,type:'warning'});
+  toast('Job returned to consultant for revision','info');
+  renderQA();
+}
+
+async function renderRatings(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:reviews}=await sb.from('reviews').select('*,jobs(job_ref,title)').order('created_at',{ascending:false});
+  const avg=(reviews||[]).length?((reviews||[]).reduce((s,r)=>s+r.rating,0)/(reviews||[]).length).toFixed(1):0;
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Ratings & Reviews</div><div class="page-sub">Platform average: ${avg} / 5 · ${(reviews||[]).length} reviews</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Job</th><th>Assignment</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead>
+<tbody>${(reviews||[]).map(r=>`<tr>
+<td class="mono" style="color:var(--blue)">${r.jobs?.job_ref||'—'}</td>
+<td style="font-size:12px;max-width:150px">${r.jobs?.title||'—'}</td>
+<td style="color:var(--gold)">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td>
+<td style="font-size:12px;color:var(--muted);font-style:italic">${r.comment?`"${r.comment}"`:'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(r.created_at)}</td>
+</tr>`).join('')||'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No reviews yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+function renderSettings(){
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Platform Settings</div><div class="page-sub">Gabriel Academics global configuration</div></div>
+<div class="two-col">
+<div class="card-box">
+  <div class="card-box-title">Rate Defaults</div>
+  <div class="form-group"><label class="form-label">Default Consultant Rate (%)</label><input class="form-input" value="60" id="s-rate"></div>
+  <div class="form-group"><label class="form-label">Minimum Rate (%)</label><input class="form-input" value="50" id="s-min"></div>
+  <div class="form-group"><label class="form-label">Maximum Rate (%)</label><input class="form-input" value="75" id="s-max"></div>
+  <button class="btn btn-gold btn-sm" onclick="toast('Settings saved','success')">Save</button>
+</div>
+<div class="card-box">
+  <div class="card-box-title">Anonymisation Rules</div>
+  ${[['Clients see consultant name','Disabled'],['Clients see consultant ID','Disabled'],['Consultants see client name','Disabled'],['Consultants see client ID','Disabled'],['Admin sees all parties','Enabled']].map(([l,v])=>`
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg);border-radius:7px;border:1px solid var(--border);margin-bottom:6px">
+    <span style="font-size:12px">${l}</span>
+    <span class="badge ${v==='Enabled'?'badge-delivered':'badge-new'}">${v}</span>
+  </div>`).join('')}
+</div>
+</div>`;
+}
+
+// ── Admin Job Detail Modal ──
+async function openJobDetailAdmin(id){
+  const {data:j}=await sb.from('jobs').select('*').eq('id',id).single();
+  if(!j)return;
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal modal-lg">
+<div class="modal-head"><span class="modal-title"><span class="mono" style="color:var(--blue)">${j.job_ref||'—'}</span> · Job Detail</span><button class="close-btn" onclick="closeModal()">${icon('x')}</button></div>
+<div class="modal-body">
+  <div style="font-size:16px;font-weight:700;margin-bottom:10px">${j.title}</div>
+  ${statusBadge(j.status)}
+  <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:0">
+    ${[['Subject',j.subject||'—'],['Level',j.level||'—'],['Pages',j.pages||'—'],['Reference Style',j.reference_style||'APA 7th'],['Deadline',fmtDate(j.deadline)],['Days Left',daysLeft(j.deadline)],['Client Budget',fmt(j.client_budget)],['Consultant Rate',`${j.consultant_rate||60}%`],['Consultant Earns',fmt(j.consultant_payout)],['Gabriel Gets',fmt(j.gabriel_margin)],['Source',j.source||'—'],['Created',fmtDate(j.created_at)]].map(([l,v])=>`
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;grid-column:span 1">
+      <span style="color:var(--muted)">${l}</span><span style="font-weight:500">${v}</span>
+    </div>`).join('')}
+  </div>
+  ${j.instructions?`<div style="margin-top:14px"><div class="form-label">Instructions</div><div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6">${j.instructions}</div></div>`:''}
+  <div style="margin-top:14px" id="modal-messages-${j.id}"></div>
+</div>
+<div class="modal-foot">
+  <button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button>
+  ${j.status==='qa_review'?`<button class="btn btn-primary btn-sm" onclick="passQA('${j.id}');closeModal()">${icon('check')} Pass QA</button>`:''}
+  ${['new','posted'].includes(j.status)?`<button class="btn btn-gold btn-sm" onclick="pushToConsultants('${j.id}')">Push to Consultants</button>`:''}
+</div>
+</div>
+</div>`);
+}
+
+async function pushToConsultants(jobId){
+  await sb.from('jobs').update({status:'posted'}).eq('id',jobId);
+  // Notify all consultants
+  const {data:cons}=await sb.from('profiles').select('id').eq('role','consultant').eq('is_active',true);
+  if(cons&&cons.length){
+    const notifs=cons.map(c=>({user_id:c.id,title:'New job available',body:'A new assignment has been posted on the mission board.',type:'info'}));
+    await sb.from('notifications').insert(notifs);
+  }
+  toast('Job pushed to all consultants','success');
+  closeModal();
+  renderAdminJobs();
+}
+
+// ── Post Job Modal ──
+function openPostJobModal(){
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+<div class="modal-head"><span class="modal-title">Post New Job</span><button class="close-btn" onclick="closeModal()">${icon('x')}</button></div>
+<div class="modal-body">
+  <div class="form-group"><label class="form-label">Assignment Title</label><input id="pj-title" class="form-input" placeholder="e.g. Literature Review — Masters Psychology"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Subject</label>
+      <select id="pj-subject" class="form-input"><option>Finance</option><option>Law</option><option>Sociology</option><option>Business</option><option>Health Sciences</option><option>Economics</option><option>Education</option><option>Psychology</option><option>IT</option><option>Engineering</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Level</label>
+      <select id="pj-level" class="form-input"><option>Honours</option><option>Masters</option><option>PhD</option><option>MBA</option><option>LLB</option><option>LLM</option><option>BTech</option></select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Pages</label><input id="pj-pages" class="form-input" type="number" value="5"></div>
+    <div class="form-group"><label class="form-label">Deadline</label><input id="pj-deadline" class="form-input" type="date"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Client Budget (R)</label><input id="pj-budget" class="form-input" type="number" placeholder="2000"></div>
+    <div class="form-group"><label class="form-label">Consultant Rate (%)</label><input id="pj-rate" class="form-input" type="number" value="60"><div class="form-note" id="pj-margin-preview">Gabriel margin: 40%</div></div>
+  </div>
+  <div class="form-group"><label class="form-label">Instructions</label><textarea id="pj-instructions" class="form-input" rows="3" placeholder="Paste assignment brief or instructions..."></textarea></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Reference Style</label>
+      <select id="pj-ref" class="form-input"><option>APA 7th</option><option>Harvard</option><option>MLA</option><option>Chicago</option><option>Vancouver</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Source</label>
+      <select id="pj-source" class="form-input"><option value="admin_manual">Admin Manual Entry</option><option value="client_self">Client Self-Submitted</option><option value="referred">Referred</option></select>
+    </div>
+  </div>
+</div>
+<div class="modal-foot">
+  <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+  <button class="btn btn-gold btn-sm" onclick="submitPostJob()">Post to Mission Board</button>
+</div>
+</div>
+</div>`);
+  document.getElementById('pj-rate').addEventListener('input',function(){
+    const r=parseFloat(this.value)||60;const budget=parseFloat(document.getElementById('pj-budget').value)||0;
+    document.getElementById('pj-margin-preview').textContent=`Gabriel margin: ${100-r}%${budget?` = ${fmt(budget*(100-r)/100)}`:''}`;
+  });
+}
+
+async function submitPostJob(){
+  const title=document.getElementById('pj-title').value.trim();
+  const budget=parseFloat(document.getElementById('pj-budget').value)||0;
+  const deadline=document.getElementById('pj-deadline').value;
+  if(!title||!budget||!deadline){toast('Please fill all required fields','error');return}
+  const {error}=await sb.from('jobs').insert({
+    title,subject:document.getElementById('pj-subject').value,level:document.getElementById('pj-level').value,
+    pages:parseInt(document.getElementById('pj-pages').value)||1,deadline:new Date(deadline).toISOString(),
+    client_budget:budget,consultant_rate:parseFloat(document.getElementById('pj-rate').value)||60,
+    instructions:document.getElementById('pj-instructions').value,reference_style:document.getElementById('pj-ref').value,
+    source:document.getElementById('pj-source').value,status:'posted'
+  });
+  if(error){toast('Error posting job: '+error.message,'error');return}
+  toast('Job posted to Mission Board','success');closeModal();renderAdminDashboard();
+}
+
+// ═══════════════════════════════
+// CLIENT PAGES
+// ═══════════════════════════════
+
+async function renderClientDashboard(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').eq('client_id',currentUser.id).order('created_at',{ascending:false}).limit(5);
+  const active=(jobs||[]).filter(j=>['posted','pending','active','submitted','qa_review'].includes(j.status)).length;
+  const done=(jobs||[]).filter(j=>j.status==='delivered').length;
+  const spent=(jobs||[]).reduce((s,j)=>s+parseFloat(j.client_budget||0),0);
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Dashboard</div><div class="page-sub">Track your academic assistance orders</div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Active Orders</div><div class="stat-value" style="color:var(--blue)">${active}</div></div>
+  <div class="stat-card"><div class="stat-label">Delivered</div><div class="stat-value" style="color:var(--green)">${done}</div></div>
+  <div class="stat-card"><div class="stat-label">Total Invested</div><div class="stat-value" style="color:var(--gold)">${fmt(spent)}</div></div>
+  <div class="stat-card"><div class="stat-label">My ID</div><div class="stat-value" style="font-size:16px;color:var(--blue)">${currentProfile?.masked_id||'—'}</div></div>
+</div>
+<div class="shield-banner">${icon('shield')}<div><strong>Your Identity is Protected</strong>No consultant will ever see your name, email, or contact details. All communication flows through Gabriel Academics.</div></div>
+<div class="section-header"><span class="section-title">Recent Orders</span><button class="btn btn-gold btn-sm" onclick="navigate('newjob')">${icon('newjob')} New Request</button></div>
+${(jobs||[]).length===0?`<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No orders yet. Submit your first request.</div></div>`:''}
+${(jobs||[]).map(j=>`
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div><div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:4px">${j.job_ref||'—'}</div>
+    <div style="font-size:14px;font-weight:600">${j.title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px">${j.level||''} · ${j.pages||'?'} pages · Due ${daysLeft(j.deadline)}</div></div>
+    <div style="text-align:right">${statusBadge(j.status)}<div style="font-size:13px;color:var(--green);font-weight:600;margin-top:6px">${fmt(j.client_budget)}</div></div>
+  </div>
+  ${j.status==='delivered'?`<div style="margin-top:10px;display:flex;gap:8px"><button class="btn btn-primary btn-xs">${icon('download')} Download</button><button class="btn btn-ghost btn-xs" onclick="openRateModal('${j.id}')">Rate Work</button></div>`:''}
+  ${['posted','pending'].includes(j.status)?`<div style="margin-top:8px;font-size:12px;color:var(--gold)">Gabriel Academics is finding the best consultant for your assignment...</div>`:''}
+</div>`).join('')}`;
+}
+
+async function renderNewJob(){
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">New Academic Request</div><div class="page-sub">Tell us exactly what you need — we handle everything else</div></div>
+<div class="card-box">
+  <div class="shield-banner">${icon('shield')}<div><strong>Your identity is fully protected</strong>You will never be contacted by or identified to any consultant.</div></div>
+  <div class="form-group"><label class="form-label">Assignment Title / Topic *</label><input id="cj-title" class="form-input" placeholder="e.g. Research Proposal on AI in South African Banking"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Subject / Discipline *</label>
+      <select id="cj-subject" class="form-input">
+<option value="">Select subject...</option>
+<optgroup label="── Primary School (Gr R–7) ──">
+<option>English / Home Language (Primary)</option>
+<option>Mathematics (Primary)</option>
+<option>Natural Sciences (Primary)</option>
+<option>Life Skills (Primary)</option>
+<option>Creative Arts / Projects (Primary)</option>
+</optgroup>
+<optgroup label="── Secondary School (Gr 8–12) ──">
+<option>Mathematics</option>
+<option>Mathematical Literacy</option>
+<option>Physical Sciences</option>
+<option>Life Sciences / Biology</option>
+<option>Accounting (Secondary)</option>
+<option>English Home / First Additional Language</option>
+<option>Geography</option>
+<option>History</option>
+<option>Business Studies / EMS</option>
+<option>IT &amp; CAT</option>
+<option>Matric Exam Preparation</option>
+</optgroup>
+<optgroup label="── Undergraduate ──">
+<option>Law (LLB)</option>
+<option>Finance &amp; Accounting</option>
+<option>Business Management</option>
+<option>IT / Computer Science</option>
+<option>Health Sciences</option>
+<option>Engineering</option>
+<option>Social Sciences / Psychology</option>
+<option>Education (BEd / PGCE)</option>
+<option>Humanities &amp; Arts</option>
+<option>Economics</option>
+</optgroup>
+<optgroup label="── Postgraduate ──">
+<option>Research Methodology &amp; Proposals</option>
+<option>Data Analysis (SPSS / R / Stata)</option>
+<option>Law (LLM / Dissertation)</option>
+<option>Finance / Economics (Postgrad)</option>
+<option>Health Sciences (Postgrad)</option>
+<option>Business &amp; Strategy (MBA / DBA)</option>
+<option>Education (MEd / DEd)</option>
+<option>Psychology / Social Work (Postgrad)</option>
+<option>Engineering / IT (Postgrad)</option>
+</optgroup>
+<option>Other</option>
+</select>
+    </div>
+    <div class="form-group"><label class="form-label">Academic Level *</label>
+      <select id="cj-level" class="form-input">
+<option value="">Select level...</option>
+<optgroup label="── Primary School ──">
+<option>Primary School (Gr R–3)</option>
+<option>Primary School (Gr 4–7)</option>
+</optgroup>
+<optgroup label="── Secondary School ──">
+<option>Secondary School (Gr 8–9)</option>
+<option>Secondary School (Gr 10–12 / Matric)</option>
+<option>IEB Matric</option>
+</optgroup>
+<optgroup label="── Undergraduate ──">
+<option>Certificate / Diploma</option>
+<option>Undergraduate Degree</option>
+<option>BTech</option>
+<option>Advanced Diploma</option>
+<option>PGCE</option>
+</optgroup>
+<optgroup label="── Postgraduate ──">
+<option>Honours</option>
+<option>Masters (MA / MSc / MCom)</option>
+<option>MBA</option>
+<option>PhD / Doctoral</option>
+<option>LLB</option>
+<option>LLM</option>
+<option>Professional Doctorate (DBA / DEd / DPhil)</option>
+</optgroup>
+</select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Number of Pages *</label><input id="cj-pages" class="form-input" type="number" min="1" placeholder="e.g. 8"></div>
+    <div class="form-group"><label class="form-label">Deadline *</label><input id="cj-deadline" class="form-input" type="date"></div>
+  </div>
+  <div class="form-group"><label class="form-label">Assignment Instructions *</label><textarea id="cj-instructions" class="form-input" rows="5" placeholder="Paste your full assignment brief, rubric, or specific instructions here. The more detail you provide, the better the work."></textarea></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Reference Style</label>
+      <select id="cj-ref" class="form-input"><option>APA 7th</option><option>Harvard</option><option>MLA</option><option>Chicago</option><option>Vancouver</option><option>None specified</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Budget (R) *</label><input id="cj-budget" class="form-input" type="number" min="100" placeholder="e.g. 1500"><div class="form-note">A quote will be confirmed before payment</div></div>
+  </div>
+  <div id="cj-error" class="error-msg"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-ghost" onclick="navigate('myjobs')">Cancel</button>
+    <button class="btn btn-gold" onclick="submitClientJob()">${icon('send')} Submit Request</button>
+  </div>
+</div>`;
+}
+
+async function submitClientJob(){
+  const title=document.getElementById('cj-title').value.trim();
+  const subject=document.getElementById('cj-subject').value;
+  const level=document.getElementById('cj-level').value;
+  const pages=parseInt(document.getElementById('cj-pages').value)||0;
+  const deadline=document.getElementById('cj-deadline').value;
+  const instructions=document.getElementById('cj-instructions').value.trim();
+  const budget=parseFloat(document.getElementById('cj-budget').value)||0;
+  const errEl=document.getElementById('cj-error');
+  if(!title||!subject||!level||!pages||!deadline||!instructions||!budget){
+    errEl.textContent='Please complete all required fields.';errEl.style.display='block';return;
+  }
+  errEl.style.display='none';
+  const {error}=await sb.from('jobs').insert({
+    title,subject,level,pages,deadline:new Date(deadline).toISOString(),instructions,
+    reference_style:document.getElementById('cj-ref').value,
+    client_budget:budget,consultant_rate:60,client_id:currentUser.id,source:'client_self',status:'new'
+  });
+  if(error){errEl.textContent='Error: '+error.message;errEl.style.display='block';return}
+  // Notify admin
+  const {data:admins}=await sb.from('profiles').select('id').eq('role','admin');
+  if(admins&&admins.length){
+    await sb.from('notifications').insert(admins.map(a=>({user_id:a.id,title:'New job submitted',body:`Client ${currentProfile?.masked_id||'unknown'} submitted: ${title}`,type:'info'})));
+  }
+  toast('Request submitted! Gabriel Academics will be in touch.','success');
+  navigate('myjobs');
+}
+
+async function renderMyJobs(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').eq('client_id',currentUser.id).order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Orders</div><div class="page-sub">${(jobs||[]).length} total orders</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Order ID</th><th>Assignment</th><th>Level</th><th>Deadline</th><th>Paid</th><th>Status</th><th></th></tr></thead>
+<tbody>${(jobs||[]).map(j=>`<tr>
+<td class="mono" style="color:var(--blue)">${j.job_ref||'—'}</td>
+<td style="max-width:180px;font-size:12px">${j.title}</td>
+<td style="font-size:12px;color:var(--muted)">${j.level||'—'}</td>
+<td style="font-size:12px;color:${daysLeftColor(j.deadline)}">${daysLeft(j.deadline)}</td>
+<td style="color:var(--green);font-weight:600">${fmt(j.client_budget)}</td>
+<td>${statusBadge(j.status)}</td>
+<td>
+  ${j.status==='delivered'?`<button class="btn btn-xs btn-primary">${icon('download')} Download</button>`:'—'}
+</td>
+</tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">No orders yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderClientPayments(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:payments}=await sb.from('payments').select('*,jobs(job_ref,title)').eq('client_id',currentUser.id).order('created_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Payments</div><div class="page-sub">All transactions through Gabriel Academics</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>For</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th></tr></thead>
+<tbody>${(payments||[]).map(p=>`<tr>
+<td class="mono" style="color:var(--blue)">${p.payment_ref||'—'}</td>
+<td class="mono" style="font-size:12px">${p.jobs?.job_ref||'—'}</td>
+<td style="font-weight:600;color:var(--green)">${fmt(p.amount)}</td>
+<td style="font-size:12px">${p.method||'—'}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(p.created_at)}</td>
+<td><span class="badge badge-${p.status}">${p.status}</span></td>
+</tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No payments yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderClientMessages(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:msgs}=await sb.from('messages').select('*,profiles!sender_id(display_name,role,masked_id)').or(`sender_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`).eq('is_internal',false).order('created_at',{ascending:true});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Messages</div><div class="page-sub">All communication is brokered through Gabriel Academics</div></div>
+<div class="card-box">
+  <div style="display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:14px">
+    <div style="width:36px;height:36px;background:rgba(245,158,11,.2);color:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">G</div>
+    <div><div style="font-size:13px;font-weight:600">Gabriel Academics</div><div style="font-size:11px;color:var(--muted)">Your account manager</div></div>
+    <span class="badge badge-delivered" style="margin-left:auto">Online</span>
+  </div>
+  <div class="chat-wrap" id="chat-messages">
+    ${(msgs||[]).length===0?`<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">No messages yet</div></div>`:''}
+    ${(msgs||[]).map(m=>{
+      const mine=m.sender_id===currentUser.id;
+      const senderName=mine?'You':'Gabriel Academics';
+      const initials=mine?(currentProfile.display_name||'U').substring(0,2).toUpperCase():'GA';
+      const avColor=mine?'rgba(59,130,246,.2)':'rgba(245,158,11,.2)';const avText=mine?'var(--blue)':'var(--gold)';
+      return`<div class="chat-bubble${mine?' mine':''}">
+        <div class="bubble-av" style="background:${avColor};color:${avText}">${initials}</div>
+        <div class="bubble-body"><div class="bubble-text">${m.body}</div><div class="bubble-time">${fmtDate(m.created_at)}</div></div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:8px">
+    <input id="msg-input" class="form-input" placeholder="Message Gabriel Academics..." onkeydown="if(event.key==='Enter')sendClientMessage()">
+    <button class="btn btn-gold btn-sm" onclick="sendClientMessage()">${icon('send')}</button>
+  </div>
+</div>`;
+  const chatWrap=document.getElementById('chat-messages');
+  if(chatWrap)chatWrap.scrollTop=chatWrap.scrollHeight;
+}
+
+async function sendClientMessage(){
+  const input=document.getElementById('msg-input');
+  const body=input.value.trim();
+  if(!body)return;
+  // Find admin to send to
+  const {data:admins}=await sb.from('profiles').select('id').eq('role','admin').limit(1);
+  const adminId=admins?.[0]?.id;
+  await sb.from('messages').insert({sender_id:currentUser.id,recipient_id:adminId,body,is_internal:false});
+  input.value='';
+  renderClientMessages();
+}
+
+function openRateModal(jobId){
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+<div class="modal-head"><span class="modal-title">Rate This Delivery</span><button class="close-btn" onclick="closeModal()">${icon('x')}</button></div>
+<div class="modal-body">
+  <div style="margin-bottom:16px">
+    <div class="form-label">Your Rating</div>
+    <div style="display:flex;gap:8px;margin-top:6px" id="star-row">
+      ${[1,2,3,4,5].map(n=>`<span style="font-size:28px;cursor:pointer;color:var(--border)" onclick="setRating(${n})" id="star-${n}">★</span>`).join('')}
+    </div>
+    <input type="hidden" id="rating-val" value="0">
+  </div>
+  <div class="form-group"><label class="form-label">Comment (optional)</label><textarea id="rating-comment" class="form-input" rows="3" placeholder="How was the quality of the work?"></textarea></div>
+</div>
+<div class="modal-foot">
+  <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+  <button class="btn btn-gold btn-sm" onclick="submitRating('${jobId}')">Submit Rating</button>
+</div>
+</div>
+</div>`);
+}
+
+function setRating(n){
+  document.getElementById('rating-val').value=n;
+  for(let i=1;i<=5;i++)document.getElementById('star-'+i).style.color=i<=n?'var(--gold)':'var(--border)';
+}
+
+async function submitRating(jobId){
+  const rating=parseInt(document.getElementById('rating-val').value)||0;
+  if(!rating){toast('Please select a rating','error');return}
+  const comment=document.getElementById('rating-comment').value.trim();
+  const {data:job}=await sb.from('jobs').select('consultant_id').eq('id',jobId).single();
+  await sb.from('reviews').upsert({job_id:jobId,client_id:currentUser.id,consultant_id:job?.consultant_id,rating,comment});
+  toast('Rating submitted — thank you!','success');closeModal();
+}
+
+// ═══════════════════════════════
+// CONSULTANT PAGES
+// ═══════════════════════════════
+
+async function renderConsultantDashboard(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const [{data:myJobs},{data:payouts}]=await Promise.all([
+    sb.from('jobs').select('*').eq('consultant_id',currentUser.id).order('created_at',{ascending:false}).limit(5),
+    sb.from('payouts').select('amount,status').eq('consultant_id',currentUser.id)
+  ]);
+  const totalEarned=(payouts||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const inEscrow=(payouts||[]).filter(p=>p.status==='escrow').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const {data:available}=await sb.from('jobs').select('id',{count:'exact'}).in('status',['posted','pending']);
+  const availCount=(available||[]).length;
+  jobCounts.available=availCount;buildSidebar('consultant');setActiveNav('dashboard');
+  const {data:myReviews}=await sb.from('reviews').select('rating').eq('consultant_id',currentUser.id);
+  const avgRating=(myReviews||[]).length?((myReviews||[]).reduce((s,r)=>s+r.rating,0)/(myReviews||[]).length).toFixed(1):0;
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Consultant Hub</div><div class="page-sub">ID: ${currentProfile?.masked_id||'—'} · Welcome back, ${(currentProfile?.display_name||'').split(' ')[0]||'Consultant'}</div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Total Earned</div><div class="stat-value" style="color:var(--gold)">${fmt(totalEarned)}</div></div>
+  <div class="stat-card"><div class="stat-label">In Escrow</div><div class="stat-value" style="color:var(--blue)">${fmt(inEscrow)}</div></div>
+  <div class="stat-card"><div class="stat-label">Available Jobs</div><div class="stat-value" style="color:var(--green)">${availCount}</div></div>
+  <div class="stat-card"><div class="stat-label">My Rating</div><div class="stat-value" style="color:var(--gold)">${avgRating||'—'}</div></div>
+</div>
+<div class="shield-banner">${icon('shield')}<div><strong>Client Anonymisation Active</strong>You only see job briefs and reference codes. Client identities are never revealed.</div></div>
+<div class="section-header"><span class="section-title">My Active Jobs</span><button class="btn btn-gold btn-sm" onclick="navigate('available')">View Available Jobs</button></div>
+${(myJobs||[]).filter(j=>j.status==='active').map(j=>`
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div><div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:4px">${j.job_ref||'—'}</div>
+    <div style="font-size:14px;font-weight:600">${j.title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px">${j.level||''} · ${j.pages||'?'} pages · Due ${daysLeft(j.deadline)}</div></div>
+    <div style="text-align:right"><span class="rate-pill">${j.consultant_rate||60}% = ${fmt(j.consultant_payout)}</span></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn btn-primary btn-xs" onclick="openSubmitModal('${j.id}')">${icon('upload')} Submit Work</button>
+    <button class="btn btn-ghost btn-xs" onclick="openClarificationModal('${j.id}')">${icon('messages')} Ask Clarification</button>
+  </div>
+</div>`).join('')}
+${(myJobs||[]).filter(j=>j.status==='active').length===0?`<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">No active jobs. Check available jobs on the board.</div></div>`:''}`;
+}
+
+async function renderAvailableJobs(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').in('status',['posted','pending']).order('created_at',{ascending:false});
+  jobCounts.available=(jobs||[]).length;buildSidebar('consultant');setActiveNav('available');
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Available Jobs</div><div class="page-sub">${(jobs||[]).length} open assignment(s) on the board</div></div>
+<div class="shield-banner">${icon('shield')}<div><strong>Anonymised Briefs Only</strong>Client identity is never revealed. All communications go through Gabriel Academics.</div></div>
+${(jobs||[]).length===0?`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No jobs available right now. Check back soon.</div></div>`:''}
+${(jobs||[]).map(j=>`
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+    <div><div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:4px">${j.job_ref||'—'}</div>
+    <div style="font-size:15px;font-weight:600">${j.title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px">${j.level||''} · ${j.pages||'?'} pages · ${j.subject||''} · Due in ${daysLeft(j.deadline)}</div></div>
+    <div style="text-align:right">
+      <div style="font-size:18px;font-weight:700;color:var(--gold)">${fmt(j.consultant_payout)}</div>
+      <div style="font-size:11px;color:var(--dim)">your earnings</div>
+    </div>
+  </div>
+  ${j.instructions?`<div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">${j.instructions.substring(0,200)}${j.instructions.length>200?'...':''}</div>`:''}
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-gold btn-sm" onclick="acceptJob('${j.id}')">${icon('check')} Accept Job</button>
+    <button class="btn btn-ghost btn-sm" onclick="openClarificationModal('${j.id}')">${icon('messages')} Ask Clarification</button>
+    <button class="btn btn-ghost btn-sm" onclick="passJob('${j.id}')">${icon('x')} Pass</button>
+  </div>
+</div>`).join('')}`;
+}
+
+async function acceptJob(jobId){
+  const {error}=await sb.from('jobs').update({status:'active',consultant_id:currentUser.id}).eq('id',jobId);
+  if(error){toast('Error: '+error.message,'error');return}
+  // Notify admin
+  const {data:job}=await sb.from('jobs').select('job_ref').eq('id',jobId).single();
+  const {data:admins}=await sb.from('profiles').select('id').eq('role','admin');
+  if(admins&&admins.length){
+    await sb.from('notifications').insert(admins.map(a=>({user_id:a.id,title:'Job accepted by consultant',body:`${currentProfile?.masked_id||'Consultant'} accepted ${job?.job_ref||'a job'}.`,type:'success'})));
+  }
+  toast('Job accepted! It is now in your active queue.','success');
+  navigate('active');
+}
+
+async function passJob(jobId){
+  toast('Job passed','info');
+  renderAvailableJobs();
+}
+
+async function renderActiveJobs(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').eq('consultant_id',currentUser.id).eq('status','active').order('deadline',{ascending:true});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Active Jobs</div><div class="page-sub">${(jobs||[]).length} job(s) in your queue</div></div>
+${(jobs||[]).length===0?`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No active jobs. Accept a job from the board.</div></div>`:''}
+${(jobs||[]).map(j=>`
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+    <div><div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:4px">${j.job_ref||'—'}</div>
+    <div style="font-size:15px;font-weight:600">${j.title}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:3px">${j.level||''} · ${j.pages||'?'} pages · ${j.subject||''}</div></div>
+    <div style="text-align:right">
+      <span class="rate-pill">${j.consultant_rate||60}% = ${fmt(j.consultant_payout)}</span>
+      <div style="font-size:12px;color:${daysLeftColor(j.deadline)};margin-top:6px;font-weight:500">${daysLeft(j.deadline)}</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:12px">
+    ${[['Reference Style',j.reference_style||'APA 7th'],['Instructions',j.instructions?'Provided':'None']].map(([l,v])=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--muted)">${l}</span><span style="font-weight:500">${v}</span>
+    </div>`).join('')}
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary btn-sm" onclick="openSubmitModal('${j.id}')">${icon('upload')} Submit for QA</button>
+    <button class="btn btn-ghost btn-sm" onclick="openClarificationModal('${j.id}')">${icon('messages')} Ask Clarification</button>
+  </div>
+</div>`).join('')}`;
+}
+
+async function renderSubmittedJobs(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:jobs}=await sb.from('jobs').select('*').eq('consultant_id',currentUser.id).in('status',['submitted','qa_review','qa_failed','delivered']).order('submitted_at',{ascending:false});
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Submitted Work</div><div class="page-sub">Awaiting QA or delivered</div></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Assignment</th><th>Submitted</th><th>Earnings</th><th>QA Notes</th><th>Status</th></tr></thead>
+<tbody>${(jobs||[]).map(j=>`<tr>
+<td class="mono" style="color:var(--blue)">${j.job_ref||'—'}</td>
+<td style="font-size:12px;max-width:160px">${j.title}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(j.submitted_at)}</td>
+<td style="color:var(--gold);font-weight:600">${fmt(j.consultant_payout)}</td>
+<td style="font-size:11px;color:${j.status==='qa_failed'?'var(--red)':'var(--muted)'};max-width:140px">${j.qa_notes||'—'}</td>
+<td>${statusBadge(j.status)}</td>
+</tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Nothing submitted yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+async function renderEarnings(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  const {data:payouts}=await sb.from('payouts').select('*,jobs(job_ref,title)').eq('consultant_id',currentUser.id).order('created_at',{ascending:false});
+  const paid=(payouts||[]).filter(p=>p.status==='paid').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const escrow=(payouts||[]).filter(p=>p.status==='escrow').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Earnings</div><div class="page-sub">Consultant ID: ${currentProfile?.masked_id||'—'}</div></div>
+<div class="stats-grid">
+  <div class="stat-card"><div class="stat-label">Total Paid Out</div><div class="stat-value" style="color:var(--gold)">${fmt(paid)}</div></div>
+  <div class="stat-card"><div class="stat-label">In Escrow</div><div class="stat-value" style="color:var(--blue)">${fmt(escrow)}</div></div>
+  <div class="stat-card"><div class="stat-label">Jobs Completed</div><div class="stat-value" style="color:var(--green)">${(payouts||[]).filter(p=>p.status==='paid').length}</div></div>
+  <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${fmt(paid+escrow)}</div></div>
+</div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ref</th><th>Job</th><th>Amount</th><th>Date</th><th>Status</th></tr></thead>
+<tbody>${(payouts||[]).map(p=>`<tr>
+<td class="mono" style="color:var(--blue)">${p.payout_ref||'—'}</td>
+<td style="font-size:12px">${p.jobs?.title||p.jobs?.job_ref||'—'}</td>
+<td style="font-weight:600;color:var(--gold)">${fmt(p.amount)}</td>
+<td style="font-size:12px;color:var(--muted)">${fmtDate(p.created_at)}</td>
+<td><span class="badge badge-${p.status}">${p.status}</span></td>
+</tr>`).join('')||'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">No earnings yet</td></tr>'}</tbody>
+</table>
+</div>`;
+}
+
+// ── Submit Work Modal ──
+function openSubmitModal(jobId){
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+<div class="modal-head"><span class="modal-title">Submit Work for QA</span><button class="close-btn" onclick="closeModal()">${icon('x')}</button></div>
+<div class="modal-body">
+  <div class="shield-banner">${icon('shield')}<div><strong>Submission Note</strong>Your work goes to Gabriel Academics for QA review before delivery to the client. Client identity is never revealed.</div></div>
+  <div class="form-group"><label class="form-label">Submission File URL</label><input id="submit-url" class="form-input" placeholder="https://drive.google.com/... or Dropbox link to your completed work"></div>
+  <div class="form-group"><label class="form-label">Notes to Gabriel Academics (optional)</label><textarea id="submit-notes" class="form-input" rows="3" placeholder="Any notes about the work, deviations from brief, etc."></textarea></div>
+</div>
+<div class="modal-foot">
+  <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+  <button class="btn btn-primary btn-sm" onclick="submitWork('${jobId}')">${icon('upload')} Submit for QA</button>
+</div>
+</div>
+</div>`);
+}
+
+async function submitWork(jobId){
+  const url=document.getElementById('submit-url').value.trim();
+  if(!url){toast('Please provide a submission file URL','error');return}
+  await sb.from('jobs').update({status:'qa_review',submission_url:url,submitted_at:new Date().toISOString()}).eq('id',jobId);
+  // Notify admin
+  const {data:job}=await sb.from('jobs').select('job_ref').eq('id',jobId).single();
+  const {data:admins}=await sb.from('profiles').select('id').eq('role','admin');
+  if(admins&&admins.length){
+    await sb.from('notifications').insert(admins.map(a=>({user_id:a.id,title:'New QA submission',body:`${job?.job_ref||'A job'} submitted for QA review.`,type:'info'})));
+  }
+  toast('Work submitted for QA review','success');closeModal();navigate('submitted');
+}
+
+// ── Clarification Modal ──
+function openClarificationModal(jobId){
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+<div class="modal-head"><span class="modal-title">Ask Clarification</span><button class="close-btn" onclick="closeModal()">${icon('x')}</button></div>
+<div class="modal-body">
+  <div class="shield-banner">${icon('shield')}<div><strong>Brokered Communication</strong>Your message goes to Gabriel Academics who will relay the relevant information without revealing client identity.</div></div>
+  <div class="form-group"><label class="form-label">Your Question</label><textarea id="clarify-body" class="form-input" rows="4" placeholder="What specific clarification do you need about this assignment?"></textarea></div>
+</div>
+<div class="modal-foot">
+  <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+  <button class="btn btn-gold btn-sm" onclick="sendClarification('${jobId}')">${icon('send')} Send</button>
+</div>
+</div>
+</div>`);
+}
+
+async function sendClarification(jobId){
+  const body=document.getElementById('clarify-body').value.trim();
+  if(!body){toast('Please type your question','error');return}
+  const {data:admins}=await sb.from('profiles').select('id').eq('role','admin').limit(1);
+  const adminId=admins?.[0]?.id;
+  await sb.from('messages').insert({job_id:jobId,sender_id:currentUser.id,recipient_id:adminId,body});
+  if(adminId){
+    const {data:job}=await sb.from('jobs').select('job_ref').eq('id',jobId).single();
+    await sb.from('notifications').insert({user_id:adminId,title:'Clarification request',body:`Consultant asks: ${body.substring(0,80)} (${job?.job_ref||'—'})`,type:'info'});
+  }
+  toast('Clarification sent to Gabriel Academics','success');closeModal();
+}
+
+// ═══ PROFILE PAGE (shared) ═══
+async function renderProfile(){
+  const p=currentProfile||{};
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">My Profile</div><div class="page-sub">ID: ${p.masked_id||'—'} · ${p.role||''} account</div></div>
+<div class="two-col">
+<div class="card-box">
+  <div class="card-box-title">Personal Details</div>
+  <div class="form-group"><label class="form-label">Full Name</label><input id="p-name" class="form-input" value="${p.display_name||''}"></div>
+  <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="${p.email||currentUser?.email||''}" readonly style="opacity:.6"></div>
+  <div class="form-group"><label class="form-label">Phone</label><input id="p-phone" class="form-input" value="${p.phone||''}" placeholder="+27 ..."></div>
+  ${p.role==='consultant'?`
+  <div class="form-group"><label class="form-label">Qualification</label><input id="p-qual" class="form-input" value="${p.qualification||''}"></div>
+  <div class="form-group"><label class="form-label">Subject Areas</label><input id="p-subjects" class="form-input" value="${(p.subject_areas||[]).join(', ')}"></div>
+  <div class="form-group"><label class="form-label">Bio</label><textarea id="p-bio" class="form-input" rows="3">${p.bio||''}</textarea></div>`:''}
+  <button class="btn btn-gold btn-sm" onclick="saveProfile()">Save Changes</button>
+</div>
+<div class="card-box">
+  <div class="card-box-title">Account Security</div>
+  <div class="form-group"><label class="form-label">New Password</label><input id="p-newpass" class="form-input" type="password" placeholder="Leave blank to keep current"></div>
+  <button class="btn btn-ghost btn-sm" onclick="changePassword()">Change Password</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+    <div class="form-label" style="margin-bottom:10px">Account Status</div>
+    ${[['Role',p.role||'—'],['Member Since',fmtDate(p.created_at)],['Verified',p.is_verified?'Yes':'Pending'],['Status',p.is_active?'Active':'Inactive']].map(([l,v])=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--muted)">${l}</span><span style="font-weight:500">${v}</span>
+    </div>`).join('')}
+  </div>
+</div>
+</div>`;
+}
+
+async function saveProfile(){
+  const updates={display_name:document.getElementById('p-name').value.trim(),phone:document.getElementById('p-phone')?.value.trim()||null};
+  if(currentProfile?.role==='consultant'){
+    updates.qualification=document.getElementById('p-qual')?.value.trim()||null;
+    updates.subject_areas=document.getElementById('p-subjects')?.value.split(',').map(s=>s.trim()).filter(Boolean)||[];
+    updates.bio=document.getElementById('p-bio')?.value.trim()||null;
+  }
+  const {error}=await sb.from('profiles').update(updates).eq('id',currentUser.id);
+  if(error){toast('Error: '+error.message,'error');return}
+  currentProfile={...currentProfile,...updates};
+  toast('Profile updated','success');
+}
+
+async function changePassword(){
+  const pass=document.getElementById('p-newpass').value;
+  if(!pass){toast('Enter a new password first','error');return}
+  const {error}=await sb.auth.updateUser({password:pass});
+  if(error){toast('Error: '+error.message,'error');return}
+  toast('Password changed successfully','success');
+  document.getElementById('p-newpass').value='';
+}
+
+// ═══════════════════════════════
+// ADMIN MESSAGES PAGE
+// ═══════════════════════════════
+
+async function renderAdminMessages(){
+  document.getElementById('main').innerHTML=`<div style="color:var(--muted);padding:40px;text-align:center"><span class="spinner"></span></div>`;
+  // Get all non-internal messages with sender/recipient profiles
+  const {data:msgs}=await sb.from('messages')
+    .select('*,sender:profiles!sender_id(display_name,masked_id,role),recipient:profiles!recipient_id(display_name,masked_id,role),jobs(job_ref,title)')
+    .eq('is_internal',false)
+    .order('created_at',{ascending:false})
+    .limit(100);
+
+  // Group by thread (job_id or direct)
+  const threads={};
+  (msgs||[]).forEach(m=>{
+    const key=m.job_id||`direct-${[m.sender_id,m.recipient_id].sort().join('-')}`;
+    if(!threads[key])threads[key]=[];
+    threads[key].push(m);
+  });
+  const threadKeys=Object.keys(threads);
+
+  document.getElementById('main').innerHTML=`
+<div class="page-header"><div class="page-title">Messages</div><div class="page-sub">All brokered communications — ${(msgs||[]).length} messages across ${threadKeys.length} threads</div></div>
+${threadKeys.length===0?`<div class="empty"><div class="empty-icon">💬</div><div class="empty-text">No messages yet</div></div>`:''}
+${threadKeys.map(key=>{
+  const thread=threads[key];
+  const latest=thread[0];
+  const jobRef=latest.jobs?.job_ref;
+  const jobTitle=latest.jobs?.title;
+  return`<div class="card-box" style="cursor:pointer" onclick="openThreadModal('${key}')">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+      <div>
+        ${jobRef?`<div class="mono" style="color:var(--blue);font-size:11px;margin-bottom:3px">${jobRef}</div>`:''}
+        <div style="font-size:13px;font-weight:600">${jobTitle||'Direct Message'}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${latest.sender?.masked_id||'?'} → ${latest.recipient?.masked_id||'?'}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--dim)">${fmtDate(latest.created_at)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${thread.length} message${thread.length!==1?'s':''}</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);font-style:italic;line-height:1.4">"${latest.body.substring(0,120)}${latest.body.length>120?'...':''}"</div>
+  </div>`;
+}).join('')}`;
+}
+
+async function openThreadModal(threadKey){
+  // Get messages for this thread
+  let query=sb.from('messages').select('*,sender:profiles!sender_id(display_name,masked_id,role),jobs(job_ref)').eq('is_internal',false).order('created_at',{ascending:true});
+  if(threadKey.startsWith('direct-')){
+    // direct thread — not job-specific
+  } else {
+    query=query.eq('job_id',threadKey);
+  }
+  const {data:msgs}=await query;
+  const first=msgs?.[0];
+  showModal(`
+<div class="modal-bg" onclick="if(event.target===this)closeModal()">
+<div class="modal modal-lg">
+<div class="modal-head">
+  <span class="modal-title">Thread: ${first?.jobs?.job_ref||'Direct'}</span>
+  <button class="close-btn" onclick="closeModal()">${icon('x')}</button>
+</div>
+<div class="modal-body">
+  <div class="chat-wrap" style="max-height:320px">
+    ${(msgs||[]).map(m=>{
+      const isAdmin=m.sender?.role==='admin';
+      const avBg=isAdmin?'rgba(245,158,11,.2)':m.sender?.role==='client'?'rgba(59,130,246,.2)':'rgba(139,92,246,.2)';
+      const avColor=isAdmin?'var(--gold)':m.sender?.role==='client'?'var(--blue)':'var(--purple)';
+      const initials=(m.sender?.masked_id||m.sender?.display_name||'?').substring(0,3).toUpperCase();
+      return`<div class="chat-bubble${isAdmin?' mine':''}">
+        <div class="bubble-av" style="background:${avBg};color:${avColor}">${initials}</div>
+        <div class="bubble-body">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:3px">${m.sender?.masked_id||'?'} (${m.sender?.role||'?'})</div>
+          <div class="bubble-text">${m.body}</div>
+          <div class="bubble-time">${fmtDate(m.created_at)}</div>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <input id="admin-reply" class="form-input" placeholder="Reply as Gabriel Academics...">
+    <button class="btn btn-gold btn-sm" onclick="sendAdminReply('${threadKey}','${first?.job_id||''}','${msgs?.[0]?.sender_id||''}')">${icon('send')}</button>
+  </div>
+</div>
+<div class="modal-foot"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button></div>
+</div>
+</div>`);
+}
+
+async function sendAdminReply(threadKey, jobId, originalSenderId){
+  const body=document.getElementById('admin-reply').value.trim();
+  if(!body)return;
+  await sb.from('messages').insert({
+    job_id:jobId||null,
+    sender_id:currentUser.id,
+    recipient_id:originalSenderId||null,
+    body
+  });
+  // Notify original sender
+  if(originalSenderId){
+    await sb.from('notifications').insert({user_id:originalSenderId,title:'Reply from Gabriel Academics',body:body.substring(0,80),type:'info'});
+  }
+  toast('Reply sent','success');
+  closeModal();
+  renderAdminMessages();
+}
+
+// ═══════════════════════════════
+// REALTIME SUBSCRIPTIONS
+// ═══════════════════════════════
+
+function startRealtime(){
+  if(!currentUser)return;
+  // Listen for new notifications for this user
+  sb.channel('notifications-'+currentUser.id)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${currentUser.id}`},payload=>{
+      loadNotifications();
+      toast(payload.new.title,'info');
+    })
+    .subscribe();
+
+  // Admin: listen for new jobs
+  if(currentProfile?.role==='admin'){
+    sb.channel('jobs-admin')
+      .on('postgres_changes',{event:'*',schema:'public',table:'jobs'},payload=>{
+        if(currentPage==='dashboard')renderAdminDashboard();
+        else if(currentPage==='jobs')renderAdminJobs();
+        else if(currentPage==='qa'&&payload.new?.status==='qa_review')renderQA();
+        else if(currentPage==='pipeline')renderPipeline();
+      })
+      .subscribe();
+  }
+
+  // Consultant: listen for new posted jobs
+  if(currentProfile?.role==='consultant'){
+    sb.channel('jobs-consultant')
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'jobs'},payload=>{
+        if(['posted','pending'].includes(payload.new?.status)&&currentPage==='available')renderAvailableJobs();
+        if(payload.new?.consultant_id===currentUser.id&&currentPage==='active')renderActiveJobs();
+      })
+      .subscribe();
+  }
+
+  // Client: listen for their job updates
+  if(currentProfile?.role==='client'){
+    sb.channel('jobs-client-'+currentUser.id)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'jobs',filter:`client_id=eq.${currentUser.id}`},payload=>{
+        if(currentPage==='dashboard')renderClientDashboard();
+        else if(currentPage==='myjobs')renderMyJobs();
+      })
+      .subscribe();
+  }
+}
+
+// ═══════════════════════════════
+// EXTEND navConfig FOR ADMIN MESSAGES
+// ═══════════════════════════════
+
+// navigate() defined above — messages included in routing table
+
+// ═══ BOOT ═══
+(async()=>{
+  const {data:{session}}=await sb.auth.getSession();
+  if(session?.user)await loadApp(session.user);
+})();
+
+// ── Level tab switcher (landing disciplines) ──
+function switchLevel(level){
+  document.querySelectorAll('.level-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.level-tab').forEach(t=>t.classList.remove('active'));
+  const panel=document.getElementById('level-'+level);
+  if(panel)panel.style.display='block';
+  const tabs=document.querySelectorAll('#level-tabs .level-tab');
+  const map={primary:0,secondary:1,undergrad:2,postgrad:3};
+  if(tabs[map[level]])tabs[map[level]].classList.add('active');
+}
+
+// ═══ URL ROUTING ═══
+// /         → landing (client-facing)
+// /gax      → admin portal  (hidden)
+// /connect  → consultant portal (private)
+function getRoute(){
+  const p=window.location.pathname.replace(/\/+$/,'').toLowerCase();
+  if(p==='/gax')return'admin';
+  if(p==='/connect')return'consultant';
+  return'client';
+}
+
+function showLanding(){
+  ['auth-client','auth-admin','auth-consultant','app-shell'].forEach(id=>{document.getElementById(id).style.display='none'});
+  document.getElementById('landing').style.display='flex';
+}
+function showPortal(role){
+  ['landing','auth-client','auth-admin','auth-consultant','app-shell'].forEach(id=>{document.getElementById(id).style.display='none'});
+  if(role==='admin')document.getElementById('auth-admin').style.display='flex';
+  else if(role==='consultant')document.getElementById('auth-consultant').style.display='flex';
+  else document.getElementById('auth-client').style.display='flex';
+  // Clear errors
+  ['auth-error','auth-success','admin-auth-error','con-auth-error','con-auth-success'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
+}
+
+// ─── Admin-specific sign in ───
+async function adminSignIn(){
+  const email=document.getElementById('admin-email').value.trim();
+  const pass=document.getElementById('admin-password').value;
+  const errEl=document.getElementById('admin-auth-error');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return}
+  const btn=document.getElementById('admin-signin-btn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.innerHTML='Sign In to Operations';btn.disabled=false;
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return}
+  const {data:prof}=await sb.from('profiles').select('role').eq('id',data.user.id).single();
+  if(prof?.role!=='admin'){errEl.textContent='Access denied. This portal is for admin accounts only.';errEl.style.display='block';await sb.auth.signOut();return}
+  await loadApp(data.user);
+}
+
+// ─── Consultant-specific sign in / sign up ───
+function conAuthTab(t){
+  document.getElementById('con-signin-panel').style.display=t==='in'?'block':'none';
+  document.getElementById('con-signup-panel').style.display=t==='up'?'block':'none';
+  document.querySelectorAll('#auth-consultant .auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='in')||(i===1&&t==='up')));
+}
+async function consultantSignIn(){
+  const email=document.getElementById('con-email').value.trim();
+  const pass=document.getElementById('con-password').value;
+  const errEl=document.getElementById('con-auth-error');
+  if(!email||!pass){errEl.textContent='Please enter your email and password.';errEl.style.display='block';return}
+  const btn=document.getElementById('con-signin-btn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.innerHTML='Sign In';btn.disabled=false;
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return}
+  const {data:prof}=await sb.from('profiles').select('role').eq('id',data.user.id).single();
+  if(prof?.role!=='consultant'){errEl.textContent='Access denied. This portal is for consultants only.';errEl.style.display='block';await sb.auth.signOut();return}
+  await loadApp(data.user);
+}
+async function consultantSignUp(){
+  const first=document.getElementById('con-first').value.trim();
+  const last=document.getElementById('con-last').value.trim();
+  const email=document.getElementById('con-reg-email').value.trim();
+  const pass=document.getElementById('con-reg-password').value;
+  const qual=document.getElementById('con-qual').value.trim();
+  const subjects=document.getElementById('con-subjects').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const bio=document.getElementById('con-bio').value.trim();
+  const errEl=document.getElementById('con-auth-error');
+  const sucEl=document.getElementById('con-auth-success');
+  if(!first||!last||!email||!pass||!qual){errEl.textContent='Please complete all required fields.';errEl.style.display='block';return}
+  if(pass.length<8){errEl.textContent='Password must be at least 8 characters.';errEl.style.display='block';return}
+  const btn=document.getElementById('con-signup-btn');
+  btn.innerHTML='<span class="spinner"></span>';btn.disabled=true;
+  const {error}=await sb.auth.signUp({email,password:pass,options:{data:{role:'consultant',display_name:`${first} ${last}`,qualification:qual,subject_areas:subjects,bio}}});
+  btn.innerHTML='Apply to Join';btn.disabled=false;
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return}
+  sucEl.textContent='Application submitted! Gabriel Academics will review and verify your account.';
+  sucEl.style.display='block';errEl.style.display='none';
+  conAuthTab('in');
+}
+
+sb.auth.onAuthStateChange((event,session)=>{
+  if(event==='SIGNED_OUT'){
+    const route=getRoute();
+    document.getElementById('app-shell').style.display='none';
+    if(route==='admin')showPortal('admin');
+    else if(route==='consultant')showPortal('consultant');
+    else showLanding();
+  }
+});
+
+// ═══ BOOT ═══
+(async()=>{
+  const route=getRoute();
+  const {data:{session}}=await sb.auth.getSession();
+  if(session?.user){
+    await loadApp(session.user);
+  } else {
+    if(route==='admin')showPortal('admin');
+    else if(route==='consultant')showPortal('consultant');
+    else showLanding();
+  }
+})();
+</script>
+</body>
+</html>
