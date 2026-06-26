@@ -66,14 +66,14 @@ export default function Landing() {
           <div style={{display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', padding: '8px 16px', borderRadius: '30px', fontSize: '14px', fontWeight: 600, marginBottom: '24px'}}>
             <Star size={16} /> Trusted by students from Grade R to PhD across South Africa
           </div>
-          <h1 style={{fontSize: '64px', fontWeight: 800, letterSpacing: '-2px', marginBottom: '24px', lineHeight: 1.1, maxWidth: '800px', margin: '0 auto 24px', textAlign: 'center'}}>
+          <h1 className="hero-title" style={{fontWeight: 800, letterSpacing: '-2px', marginBottom: '24px', lineHeight: 1.1, maxWidth: '800px', margin: '0 auto 24px', textAlign: 'center'}}>
             Academic Excellence, <br/><span style={{color: 'var(--gold)'}}>Delivered to You</span>
           </h1>
           <p style={{fontSize: '20px', color: 'var(--muted)', maxWidth: '600px', margin: '0 auto 48px', lineHeight: 1.6}}>
             Professional academic assistance from Primary School through to Postgraduate level. Confidential. Expert. On time.
           </p>
           
-          <div style={{display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '48px'}}>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'center', marginBottom: '48px'}}>
             <button className="btn btn-gold" style={{padding: '16px 32px', fontSize: '18px'}} onClick={() => navigate('/auth/client')}>Submit Your Request</button>
             <button className="btn btn-ghost" style={{padding: '16px 32px', fontSize: '18px', background: 'rgba(255,255,255,0.05)'}} onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>See How It Works</button>
           </div>
