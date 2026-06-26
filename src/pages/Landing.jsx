@@ -96,26 +96,39 @@ export default function Landing() {
             <p style={{color: 'var(--muted)', fontSize: '20px', maxWidth: '600px', margin: '0 auto'}}>Four steps from request to delivery — we handle everything in between.</p>
           </div>
 
-          <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px'}}>
-            <div className="card-box" style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '32px', textAlign: 'center'}}>
-              <div style={{width: '64px', height: '64px', background: 'rgba(59,130,246,0.1)', color: 'var(--blue)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, margin: '0 auto 24px'}}>1</div>
-              <h3 style={{fontSize: '20px', marginBottom: '12px'}}>Submit Your Request</h3>
-              <p style={{color: 'var(--muted)', lineHeight: 1.5, fontSize: '14px'}}>Create a free account and describe your assignment — topic, level, pages, deadline and instructions.</p>
+          <div className="timeline-container">
+            <div className="timeline-line"></div>
+            
+            <div className="timeline-item left">
+              <div className="timeline-content">
+                <h3>Submit Your Request</h3>
+                <p>Create a free account and describe your assignment — topic, level, pages, deadline and instructions.</p>
+              </div>
+              <div className="timeline-marker" style={{color: 'var(--blue)', borderColor: 'var(--blue)', background: 'rgba(59,130,246,0.1)'}}>1</div>
             </div>
-            <div className="card-box" style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '32px', textAlign: 'center'}}>
-              <div style={{width: '64px', height: '64px', background: 'rgba(245,158,11,0.1)', color: 'var(--gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, margin: '0 auto 24px'}}>2</div>
-              <h3 style={{fontSize: '20px', marginBottom: '12px'}}>We Match an Expert</h3>
-              <p style={{color: 'var(--muted)', lineHeight: 1.5, fontSize: '14px'}}>Gabriel Academics selects the most qualified consultant from our vetted panel. You never deal with them directly.</p>
+
+            <div className="timeline-item right">
+              <div className="timeline-content">
+                <h3>We Match an Expert</h3>
+                <p>Gabriel Academics selects the most qualified consultant from our vetted panel. You never deal with them directly.</p>
+              </div>
+              <div className="timeline-marker" style={{color: 'var(--gold)', borderColor: 'var(--gold)', background: 'rgba(245,158,11,0.1)'}}>2</div>
             </div>
-            <div className="card-box" style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '32px', textAlign: 'center'}}>
-              <div style={{width: '64px', height: '64px', background: 'rgba(16,185,129,0.1)', color: 'var(--green)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, margin: '0 auto 24px'}}>3</div>
-              <h3 style={{fontSize: '20px', marginBottom: '12px'}}>Quality Review</h3>
-              <p style={{color: 'var(--muted)', lineHeight: 1.5, fontSize: '14px'}}>Every submission passes our internal quality check before it reaches you. No shortcuts.</p>
+
+            <div className="timeline-item left">
+              <div className="timeline-content">
+                <h3>Quality Review</h3>
+                <p>Every submission passes our internal quality check before it reaches you. No shortcuts.</p>
+              </div>
+              <div className="timeline-marker" style={{color: 'var(--green)', borderColor: 'var(--green)', background: 'rgba(16,185,129,0.1)'}}>3</div>
             </div>
-            <div className="card-box" style={{background: 'var(--card)', border: '1px solid var(--border)', padding: '32px', textAlign: 'center'}}>
-              <div style={{width: '64px', height: '64px', background: 'rgba(139,92,246,0.1)', color: 'var(--purple)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 700, margin: '0 auto 24px'}}>4</div>
-              <h3 style={{fontSize: '20px', marginBottom: '12px'}}>Secure Delivery</h3>
-              <p style={{color: 'var(--muted)', lineHeight: 1.5, fontSize: '14px'}}>You receive your completed work from Gabriel Academics. Rate the service and request revisions if needed.</p>
+
+            <div className="timeline-item right">
+              <div className="timeline-content">
+                <h3>Secure Delivery</h3>
+                <p>You receive your completed work from Gabriel Academics. Rate the service and request revisions if needed.</p>
+              </div>
+              <div className="timeline-marker" style={{color: 'var(--purple)', borderColor: 'var(--purple)', background: 'rgba(139,92,246,0.1)'}}>4</div>
             </div>
           </div>
         </div>
