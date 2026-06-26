@@ -1,0 +1,83 @@
+.animated-hw-wrap {
+  width: 100%;
+}
+.animated-hw-stages {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  position: relative;
+  z-index: 2;
+}
+.animated-hw-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 0 8px;
+}
+.animated-hw-canvas {
+  width: 140px;
+  height: 180px;
+  display: block;
+  margin: 0 auto;
+}
+.animated-hw-label {
+  text-align: center;
+  margin-top: 12px;
+}
+.animated-hw-num {
+  font-family: 'Caveat', cursive;
+  font-size: 14px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+.animated-hw-label h3 {
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+.animated-hw-label p {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.animated-hw-conn {
+  position: absolute;
+  top: 72px;
+  right: -22px;
+  z-index: 3;
+  pointer-events: none;
+}
+.animated-hw-conn svg {
+  width: 44px;
+  height: 24px;
+}
+
+@media (max-width: 900px) {
+  .animated-hw-stages {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px 0;
+  }
+  .animated-hw-stage:nth-child(2) .animated-hw-conn,
+  .animated-hw-stage:nth-child(4) .animated-hw-conn {
+    display: none;
+  }
+  .animated-hw-conn {
+    right: -22px;
+  }
+}
+@media (max-width: 600px) {
+  .animated-hw-stages {
+    grid-template-columns: 1fr;
+    gap: 40px 0;
+  }
+  .animated-hw-conn {
+    display: none !important;
+  }
+}

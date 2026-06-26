@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, School, BookOpen, Calculator, Globe, Microscope, MessageCircle, Palette, Lock, GraduationCap, CheckCircle, Moon, Sun, Menu, X } from 'lucide-react';
 import { useTheme } from '../lib/useTheme';
 import HeroAnimation from '../components/HeroAnimation';
+import AnimatedHowItWorks from '../components/AnimatedHowItWorks';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -96,41 +97,7 @@ export default function Landing() {
             <p style={{color: 'var(--muted)', fontSize: '20px', maxWidth: '600px', margin: '0 auto'}}>Four steps from request to delivery — we handle everything in between.</p>
           </div>
 
-          <div className="timeline-container">
-            <div className="timeline-line"></div>
-            
-            <div className="timeline-item left">
-              <div className="timeline-content">
-                <h3>Submit Your Request</h3>
-                <p>Create a free account and describe your assignment — topic, level, pages, deadline and instructions.</p>
-              </div>
-              <div className="timeline-marker" style={{color: 'var(--blue)', borderColor: 'var(--blue)', background: 'rgba(59,130,246,0.1)'}}>1</div>
-            </div>
-
-            <div className="timeline-item right">
-              <div className="timeline-content">
-                <h3>We Match an Expert</h3>
-                <p>Gabriel Academics selects the most qualified consultant from our vetted panel. You never deal with them directly.</p>
-              </div>
-              <div className="timeline-marker" style={{color: 'var(--gold)', borderColor: 'var(--gold)', background: 'rgba(245,158,11,0.1)'}}>2</div>
-            </div>
-
-            <div className="timeline-item left">
-              <div className="timeline-content">
-                <h3>Quality Review</h3>
-                <p>Every submission passes our internal quality check before it reaches you. No shortcuts.</p>
-              </div>
-              <div className="timeline-marker" style={{color: 'var(--green)', borderColor: 'var(--green)', background: 'rgba(16,185,129,0.1)'}}>3</div>
-            </div>
-
-            <div className="timeline-item right">
-              <div className="timeline-content">
-                <h3>Secure Delivery</h3>
-                <p>You receive your completed work from Gabriel Academics. Rate the service and request revisions if needed.</p>
-              </div>
-              <div className="timeline-marker" style={{color: 'var(--purple)', borderColor: 'var(--purple)', background: 'rgba(139,92,246,0.1)'}}>4</div>
-            </div>
-          </div>
+          <AnimatedHowItWorks />
         </div>
       </div>
 
