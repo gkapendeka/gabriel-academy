@@ -8,6 +8,7 @@ export default function Landing() {
   const navigate = useNavigate();
   const { isLightMode, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeLevel, setActiveLevel] = useState('primary');
 
   return (
     <div id="app-shell" style={{background: 'var(--bg)', minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
@@ -120,6 +121,7 @@ export default function Landing() {
         </div>
       </div>
 
+
       {/* Who We Serve */}
       <div style={{padding: '100px 24px'}}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
@@ -129,52 +131,112 @@ export default function Landing() {
           </div>
 
           <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '48px'}}>
-            {['Primary School', 'Secondary School', 'Undergraduate', 'Postgraduate'].map((level, idx) => (
-              <div key={idx} style={{background: idx === 0 ? 'var(--blue)' : 'var(--surface)', border: '1px solid var(--border)', padding: '16px', textAlign: 'center', borderRadius: '8px', fontWeight: 600}}>
-                {level}
+            {[
+              { label: 'Primary School', key: 'primary' },
+              { label: 'Secondary School', key: 'secondary' },
+              { label: 'Undergraduate', key: 'undergrad' },
+              { label: 'Postgraduate', key: 'postgrad' },
+            ].map((lvl) => (
+              <div key={lvl.key}
+                onClick={() => setActiveLevel(lvl.key)}
+                style={{
+                  background: activeLevel === lvl.key ? 'var(--blue)' : 'var(--surface)',
+                  border: `1px solid ${activeLevel === lvl.key ? 'var(--blue)' : 'var(--border)'}`,
+                  padding: '16px', textAlign: 'center', borderRadius: '8px',
+                  fontWeight: 600, cursor: 'pointer',
+                  color: activeLevel === lvl.key ? '#fff' : 'var(--text)',
+                  transition: 'all 0.2s'
+                }}>
+                {lvl.label}
               </div>
             ))}
           </div>
 
-          {/* Primary School Deep Dive */}
+          {/* Level Content */}
           <div style={{background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '16px', padding: '48px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
-              <div style={{color: 'var(--blue)'}}><School size={48} /></div>
-              <div>
-                <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Primary School</h3>
-                <div style={{color: 'var(--muted)'}}>Grade R – Grade 7 · Ages 5–13</div>
-              </div>
-            </div>
-            
-            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20} /> English & Literacy</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Reading · Writing · Comprehension · Creative Writing</div>
-              </div>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20} /> Mathematics</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Numeracy · Problem Solving · Mental Maths</div>
-              </div>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20} /> Life Skills</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Social Studies · Environment · Health</div>
-              </div>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20} /> Natural Sciences</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Basic Science · Technology · Discovery</div>
-              </div>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><MessageCircle size={20} /> Home Language</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Zulu · Afrikaans · Sotho · Xhosa + more</div>
-              </div>
-              <div>
-                <div style={{fontSize: '20px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Palette size={20} /> Arts & Crafts</div>
-                <div style={{color: 'var(--muted)', fontSize: '14px'}}>Creative projects · School assignments · Portfolios</div>
-              </div>
-            </div>
+            {activeLevel === 'primary' && (
+              <>
+                <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
+                  <div style={{color: 'var(--blue)'}}><School size={48} /></div>
+                  <div>
+                    <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Primary School</h3>
+                    <div style={{color: 'var(--muted)'}}>Grade R – Grade 7 · Ages 5–13</div>
+                  </div>
+                </div>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20}/> English & Literacy</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Reading · Writing · Comprehension · Creative Writing</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20}/> Mathematics</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Numeracy · Problem Solving · Mental Maths</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20}/> Life Skills</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Social Studies · Environment · Health</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20}/> Natural Sciences</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Basic Science · Technology · Discovery</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><MessageCircle size={20}/> Home Language</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Zulu · Afrikaans · Sotho · Xhosa + more</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Palette size={20}/> Arts & Crafts</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Creative projects · School assignments · Portfolios</div></div>
+                </div>
+              </>
+            )}
+
+            {activeLevel === 'secondary' && (
+              <>
+                <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
+                  <div style={{color: 'var(--blue)'}}><GraduationCap size={48} /></div>
+                  <div>
+                    <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Secondary School</h3>
+                    <div style={{color: 'var(--muted)'}}>Grade 8 – Grade 12 · Ages 14–18 · Matric Prep</div>
+                  </div>
+                </div>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20}/> Mathematics & Science</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Pure Maths · Maths Literacy · Physical Science · Chemistry</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20}/> English & Languages</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Essays · Literature · Poetry · Oral Prep · Afrikaans</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20}/> Life Sciences & Geography</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Biology · Ecology · Mapwork · Climate</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20}/> Accounting & Business</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Financial Statements · Business Studies · Economics</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Palette size={20}/> Creative Arts & CAT</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Visual Arts · Drama · Computer Applications Technology</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><CheckCircle size={20}/> Matric Exam Prep</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Past papers · Revision plans · Subject coaching</div></div>
+                </div>
+              </>
+            )}
+
+            {activeLevel === 'undergrad' && (
+              <>
+                <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
+                  <div style={{color: 'var(--blue)'}}><BookOpen size={48} /></div>
+                  <div>
+                    <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Undergraduate</h3>
+                    <div style={{color: 'var(--muted)'}}>Diploma · Degree · BTech · Honours</div>
+                  </div>
+                </div>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20}/> Essays & Reports</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Academic writing · Research papers · Case studies</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20}/> Statistics & Data</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>SPSS · Excel · R · Data interpretation</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20}/> STEM Subjects</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Engineering · IT · Computer Science · Chemistry</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20}/> Business & Law</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Management · Finance · Commercial Law · Marketing</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><MessageCircle size={20}/> Humanities</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Psychology · Sociology · History · Philosophy</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><CheckCircle size={20}/> Referencing & Citations</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>APA · Harvard · MLA · Chicago · Turabian</div></div>
+                </div>
+              </>
+            )}
+
+            {activeLevel === 'postgrad' && (
+              <>
+                <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px'}}>
+                  <div style={{color: 'var(--blue)'}}><Microscope size={48} /></div>
+                  <div>
+                    <h3 style={{fontSize: '28px', fontWeight: 700, marginBottom: '4px'}}>Postgraduate</h3>
+                    <div style={{color: 'var(--muted)'}}>Honours · Masters · MBA · PhD · Doctoral</div>
+                  </div>
+                </div>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px'}}>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><BookOpen size={20}/> Dissertations & Theses</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Chapter writing · Literature reviews · Argumentation</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Calculator size={20}/> Research Methodology</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Quantitative · Qualitative · Mixed methods · Sampling</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Microscope size={20}/> Data Analysis</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>SPSS · NVivo · ATLAS.ti · Stata · Python</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><Globe size={20}/> Publication & Editing</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Proofreading · Academic editing · Journal formatting</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><GraduationCap size={20}/> MBA & Professional</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Business cases · Strategic plans · Capstone projects</div></div>
+                  <div><div style={{fontSize: '18px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px'}}><CheckCircle size={20}/> Proposal Development</div><div style={{color: 'var(--muted)', fontSize: '14px'}}>Research proposals · Ethics applications · Concept papers</div></div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
+
 
       {/* Our Promise */}
       <div style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
