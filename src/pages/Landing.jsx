@@ -75,7 +75,7 @@ export default function Landing() {
           
           <div style={{display: 'flex', gap: '16px', justifyContent: 'center', marginBottom: '48px'}}>
             <button className="btn btn-gold" style={{padding: '16px 32px', fontSize: '18px'}} onClick={() => navigate('/auth/client')}>Submit Your Request</button>
-            <button className="btn btn-ghost" style={{padding: '16px 32px', fontSize: '18px', background: 'rgba(255,255,255,0.05)'}}>See How It Works</button>
+            <button className="btn btn-ghost" style={{padding: '16px 32px', fontSize: '18px', background: 'rgba(255,255,255,0.05)'}} onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>See How It Works</button>
           </div>
 
           <div style={{display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap', fontSize: '14px', color: 'var(--muted)', fontWeight: 500}}>
@@ -89,7 +89,7 @@ export default function Landing() {
       </HeroAnimation>
 
       {/* How it Works */}
-      <div style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
+      <div id="how-it-works" style={{background: 'var(--surface)', padding: '100px 24px', borderTop: '1px solid var(--border)'}}>
         <div style={{maxWidth: '1200px', margin: '0 auto'}}>
           <div style={{textAlign: 'center', marginBottom: '64px'}}>
             <h2 style={{fontSize: '42px', fontWeight: 700, marginBottom: '16px'}}>How It Works</h2>
