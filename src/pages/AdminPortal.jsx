@@ -626,8 +626,8 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
   };
 
   const totalValue = user.role === 'client' 
-    ? jobs.reduce((sum, j) => sum + (j.client_budget || 0), 0)
-    : jobs.reduce((sum, j) => sum + (j.consultant_payout || 0), 0);
+    ? jobs.reduce((sum, j) => sum + Number(j.client_budget || 0), 0)
+    : jobs.reduce((sum, j) => sum + Number(j.consultant_payout || 0), 0);
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '24px', flex: 1}}>
@@ -803,13 +803,13 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
                           R{user.role === 'client' ? j.client_budget : (j.consultant_payout || 0)}
                         </td>
                         {user.role === 'client' && (
-                          <td style={{padding: '12px 16px', textAlign: 'right'}}>
-                            R{j.total_paid.toFixed(2)}
+                          <td style={{padding: '12px 16px', textAlign: 'right', fontWeight: 600}}>
+                            R{Number(j.total_paid || 0).toFixed(2)}
                           </td>
                         )}
                         {user.role === 'client' && (
-                          <td style={{padding: '12px 16px', textAlign: 'right', color: (j.client_budget - j.total_paid) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (j.client_budget - j.total_paid) > 0 ? 600 : 400}}>
-                            R{Math.max(0, j.client_budget - j.total_paid).toFixed(2)}
+                          <td style={{padding: '12px 16px', textAlign: 'right', color: (j.client_budget - (j.total_paid || 0)) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (j.client_budget - (j.total_paid || 0)) > 0 ? 600 : 400}}>
+                            R{Math.max(0, j.client_budget - (j.total_paid || 0)).toFixed(2)}
                           </td>
                         )}
                       </tr>
@@ -1328,9 +1328,9 @@ function FinancesTab() {
 
   if (loading) return <div className="empty"><span className="spinner"></span></div>;
 
-  const totalRevenue = jobs.reduce((sum, j) => sum + (j.client_budget || 0), 0);
-  const totalPayouts = jobs.reduce((sum, j) => sum + (j.consultant_payout || 0), 0);
-  const totalMargin = jobs.reduce((sum, j) => sum + (j.gabriel_margin || 0), 0);
+  const totalRevenue = jobs.reduce((sum, j) => sum + Number(j.client_budget || 0), 0);
+  const totalPayouts = jobs.reduce((sum, j) => sum + Number(j.consultant_payout || 0), 0);
+  const totalMargin = jobs.reduce((sum, j) => sum + Number(j.gabriel_margin || 0), 0);
   
   const pendingPayouts = consultants.filter(c => c.wallet_balance > 0);
 
@@ -1386,8 +1386,8 @@ function FinancesTab() {
                       <span className={`badge badge-${job.status}`}>{formatStatus(job.status)}</span>
                     </td>
                     <td style={{padding: '12px 16px', fontWeight: 600}}>R{job.client_budget}</td>
-                    <td style={{padding: '12px 16px', fontWeight: 600}}>R{job.total_paid.toFixed(2)}</td>
-                    <td style={{padding: '12px 16px', color: (job.client_budget - job.total_paid) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (job.client_budget - job.total_paid) > 0 ? 600 : 400}}>R{Math.max(0, job.client_budget - job.total_paid).toFixed(2)}</td>
+                    <td style={{padding: '12px 16px', fontWeight: 600}}>R{Number(job.total_paid || 0).toFixed(2)}</td>
+                    <td style={{padding: '12px 16px', color: (job.client_budget - (job.total_paid || 0)) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (job.client_budget - (job.total_paid || 0)) > 0 ? 600 : 400}}>R{Math.max(0, job.client_budget - (job.total_paid || 0)).toFixed(2)}</td>
                     <td style={{padding: '12px 16px', color: 'var(--red)'}}>- R{job.consultant_payout || 0}</td>
                     <td style={{padding: '12px 16px', color: 'var(--green)', fontWeight: 600}}>R{job.gabriel_margin || 0}</td>
                   </tr>
@@ -1749,7 +1749,7 @@ export default function AdminPortal() {
   );
 
   // Finances
-  const totalGabrielMargin = jobs.filter(j => j.status === 'delivered').reduce((sum, j) => sum + (j.gabriel_margin || 0), 0);
+  const totalGabrielMargin = jobs.filter(j => j.status === 'delivered').reduce((sum, j) => sum + Number(j.gabriel_margin || 0), 0);
 
   return (
     <div id="app-shell">
