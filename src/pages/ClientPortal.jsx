@@ -53,6 +53,38 @@ function JobModal({ job, profile, onClose }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [localAttachments, setLocalAttachments] = useState(job.attachments || []);
+
+  const handleUploadAttachment = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+      const filePath = `${profile.id}/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage.from('job_attachments').upload(filePath, file);
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage.from('job_attachments').getPublicUrl(filePath);
+      const newAttachment = { name: file.name, url: urlData.publicUrl, size: file.size, type: file.type };
+      
+      const { error: rpcError } = await supabase.rpc('add_job_attachment', { 
+        p_job_id: job.id, 
+        p_attachment: newAttachment 
+      });
+      if (rpcError) throw rpcError;
+      
+      setLocalAttachments(prev => [...(prev || []), newAttachment]);
+    } catch (err) {
+      alert('Error uploading attachment: ' + err.message);
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSend = () => {
     if (!msgText.trim()) return;
@@ -109,6 +141,32 @@ function JobModal({ job, profile, onClose }) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="card-box" style={{marginTop: '16px'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                <div className="card-box-title" style={{fontSize: '14px', marginBottom: 0}}>Attachments</div>
+                <div>
+                  <input type="file" id={`attach-${job.id}`} style={{display: 'none'}} onChange={handleUploadAttachment} disabled={isUploading} />
+                  <label htmlFor={`attach-${job.id}`} className="btn btn-ghost btn-sm" style={{cursor: 'pointer', opacity: isUploading ? 0.5 : 1}}>
+                    {isUploading ? 'Uploading...' : '+ Add File'}
+                  </label>
+                </div>
+              </div>
+              
+              {localAttachments.length === 0 ? (
+                <div style={{fontSize: '12px', color: 'var(--muted)'}}>No files attached.</div>
+              ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  {localAttachments.map((att, idx) => (
+                    <div key={idx} style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', background: 'var(--bg)', padding: '6px 10px', borderRadius: '4px'}}>
+                      <div style={{color: 'var(--blue)'}}>📄</div>
+                      <a href={att.url} target="_blank" rel="noreferrer" style={{flex: 1, color: 'var(--text)', textDecoration: 'none'}}>{att.name}</a>
+                      <div style={{color: 'var(--muted)'}}>{(att.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="card-box" style={{marginTop: '16px'}}>

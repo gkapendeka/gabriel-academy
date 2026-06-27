@@ -1,0 +1,459 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Inter:wght@400;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+.wrap{background:#0d1117;border-radius:18px;overflow:hidden;padding:48px 24px 56px;position:relative;min-height:620px}
+.hdr{text-align:center;margin-bottom:48px;position:relative;z-index:2}
+.hdr-tag{font-family:'Caveat',cursive;font-size:18px;color:#818cf8;letter-spacing:.04em;display:block;margin-bottom:6px}
+.hdr h2{font-family:'Inter',sans-serif;font-size:36px;font-weight:700;color:#f1f5f9;letter-spacing:-.02em;line-height:1.15}
+.hdr h2 em{font-style:normal;color:#818cf8}
+.hdr p{font-family:'Inter',sans-serif;font-size:14px;color:#475569;margin-top:10px}
+.stages{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;z-index:2}
+.stage{display:flex;flex-direction:column;align-items:center;position:relative;padding:0 8px}
+.stage-canvas{width:140px;height:180px;display:block;margin:0 auto}
+.stage-label{text-align:center;margin-top:12px}
+.stage-label .num{font-family:'Caveat',cursive;font-size:13px;color:#475569;display:block;margin-bottom:4px}
+.stage-label h3{font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:5px;line-height:1.3}
+.stage-label p{font-family:'Inter',sans-serif;font-size:11px;color:#475569;line-height:1.55}
+.conn{position:absolute;top:72px;right:-22px;z-index:3;pointer-events:none}
+.conn svg{width:44px;height:24px}
+.ground-strip{position:relative;height:12px;margin:0 0 0;display:flex;align-items:center;justify-content:space-around;z-index:1}
+.ground-line{position:absolute;top:4px;left:8%;right:8%;height:2px;background:rgba(255,255,255,.06);border-radius:1px}
+@keyframes float-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wave-arm{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(25deg)}}
+@keyframes run-body{0%,100%{transform:translateX(0) scaleX(1)}50%{transform:translateX(3px) scaleX(1)}}
+@keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}60%{transform:translateY(-18px)}}
+@keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes dash-travel{to{stroke-dashoffset:-40}}
+@keyframes checkmark-draw{from{stroke-dashoffset:60}to{stroke-dashoffset:0}}
+@keyframes doc-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes magnify-bob{0%,100%{transform:translateY(0) rotate(-15deg)}50%{transform:translateY(-6px) rotate(5deg)}}
+@keyframes shield-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+@keyframes confetti-fall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(40px) rotate(360deg);opacity:0}}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes pencil-write{0%,100%{transform:translate(0,0) rotate(-30deg)}30%{transform:translate(8px,2px) rotate(-30deg)}60%{transform:translate(4px,-2px) rotate(-30deg)}}
+@keyframes lean-think{0%,100%{transform:rotate(0)}50%{transform:rotate(4deg)}}
+@keyframes folder-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes conn-dash{to{stroke-dashoffset:-24}}
+</style>
+
+<div class="wrap">
+  <div class="hdr">
+    <span class="hdr-tag">✦ the journey</span>
+    <h2>How it <em>works</em></h2>
+    <p>Four steps from request to delivery — we handle everything in between.</p>
+  </div>
+
+  <div class="stages">
+
+    <div class="stage">
+      <canvas class="stage-canvas" id="c1" width="140" height="180"></canvas>
+      <div class="conn">
+        <svg viewBox="0 0 44 24"><path d="M4 12 Q22 4 40 12" stroke="#818cf8" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity=".5"><animate attributeName="stroke-dashoffset" from="0" to="-28" dur="1.2s" repeatCount="indefinite"/></path><polygon points="36,8 40,12 36,16" fill="#818cf8" opacity=".5"/></svg>
+      </div>
+      <div class="stage-label">
+        <span class="num">step 01</span>
+        <h3>Submit your request</h3>
+        <p>Describe your assignment — topic, level, pages, deadline.</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas class="stage-canvas" id="c2" width="140" height="180"></canvas>
+      <div class="conn">
+        <svg viewBox="0 0 44 24"><path d="M4 12 Q22 4 40 12" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity=".5"><animate attributeName="stroke-dashoffset" from="0" to="-28" dur="1.2s" repeatCount="indefinite"/></path><polygon points="36,8 40,12 36,16" fill="#fbbf24" opacity=".5"/></svg>
+      </div>
+      <div class="stage-label">
+        <span class="num">step 02</span>
+        <h3>We match an expert</h3>
+        <p>Gabriel Academics selects your best-fit consultant.</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas class="stage-canvas" id="c3" width="140" height="180"></canvas>
+      <div class="conn">
+        <svg viewBox="0 0 44 24"><path d="M4 12 Q22 4 40 12" stroke="#2dd4bf" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity=".5"><animate attributeName="stroke-dashoffset" from="0" to="-28" dur="1.2s" repeatCount="indefinite"/></path><polygon points="36,8 40,12 36,16" fill="#2dd4bf" opacity=".5"/></svg>
+      </div>
+      <div class="stage-label">
+        <span class="num">step 03</span>
+        <h3>Quality review</h3>
+        <p>Every submission passes our internal quality check.</p>
+      </div>
+    </div>
+
+    <div class="stage">
+      <canvas class="stage-canvas" id="c4" width="140" height="180"></canvas>
+      <div class="stage-label">
+        <span class="num">step 04</span>
+        <h3>Secure delivery</h3>
+        <p>Receive your work, rate the service, request revisions.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const PI = Math.PI;
+  const TAU = PI*2;
+  let t = 0;
+
+  function lerp(a,b,x){return a+(b-a)*x}
+  function easeInOut(x){return x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2}
+
+  function drawPerson(ctx, x, y, color, opts){
+    opts = opts||{};
+    const s = opts.scale||1;
+    const headR = 10*s;
+    const bodyH = 28*s;
+    const legL = 22*s;
+    const armL = 18*s;
+    const leanX = opts.leanX||0;
+    const leanA = opts.leanAngle||0;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(leanA);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5*s;
+    ctx.lineCap = 'round';
+
+    const headY = -bodyH-legL/2-headR*2+10*s;
+    const bodyTop = headY+headR*2;
+    const bodyBot = bodyTop+bodyH;
+
+    ctx.beginPath();
+    ctx.arc(leanX, headY+headR, headR, 0, TAU);
+    ctx.stroke();
+
+    let blink = opts.blink||0;
+    ctx.save();
+    ctx.translate(leanX, headY+headR);
+    ctx.scale(1, blink<.5?1:.2);
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(-3.5*s, -1*s, 1.8*s, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(3.5*s, -1*s, 1.8*s, 0, TAU); ctx.fill();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.moveTo(leanX, bodyTop);
+    ctx.lineTo(leanX, bodyBot);
+    ctx.stroke();
+
+    const la = opts.leftArm||-PI/4;
+    const ra = opts.rightArm||PI/4;
+    ctx.beginPath();
+    ctx.moveTo(leanX, bodyTop+6*s);
+    ctx.lineTo(leanX + Math.cos(PI+la)*armL, bodyTop+6*s + Math.sin(PI+la)*armL);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(leanX, bodyTop+6*s);
+    ctx.lineTo(leanX + Math.cos(ra)*armL, bodyTop+6*s + Math.sin(ra)*armL);
+    ctx.stroke();
+
+    const ll = opts.leftLeg||PI/4;
+    const rl = opts.rightLeg||-PI/4;
+    ctx.beginPath();
+    ctx.moveTo(leanX, bodyBot);
+    ctx.lineTo(leanX + Math.cos(PI/2+ll)*legL, bodyBot + Math.cos(ll)*legL);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(leanX, bodyBot);
+    ctx.lineTo(leanX + Math.cos(PI/2+rl)*legL, bodyBot + Math.cos(rl)*legL);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function scene1(ctx, t){
+    ctx.clearRect(0,0,140,180);
+    const cy = 145;
+
+    const bob = Math.sin(t*1.8)*4;
+    const blink = Math.sin(t*0.3) > 0.95 ? 0.1 : 1;
+
+    const writePhase = (Math.sin(t*2.5)+1)/2;
+    const pencilX = 30 + writePhase*28;
+    const pencilY = cy - 44 + Math.sin(t*2.5)*3;
+
+    ctx.save();
+    ctx.strokeStyle='#4f8ef7';
+    ctx.lineWidth=1.5;
+    ctx.fillStyle='rgba(79,142,247,0.08)';
+    roundRect(ctx, 20, cy-56, 100, 36, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    const lines = [0,8,16];
+    lines.forEach((ly,i)=>{
+      const lineW = i===0?60:i===1?45:30;
+      ctx.save();
+      ctx.strokeStyle='rgba(79,142,247,0.35)';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(28, cy-48+ly);
+      ctx.lineTo(28+lineW, cy-48+ly);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    ctx.save();
+    ctx.translate(pencilX, pencilY);
+    ctx.rotate(-0.5);
+    ctx.strokeStyle='#fbbf24';
+    ctx.lineWidth=2;
+    ctx.fillStyle='#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(0,-10); ctx.lineTo(3,8); ctx.lineTo(-3,8); ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle='#fbbf24';
+    ctx.lineWidth=1;
+    ctx.strokeRect(-3,-14,6,6);
+    ctx.restore();
+
+    const armR = -PI/3 + Math.sin(t*2.5)*0.4;
+    drawPerson(ctx, 70, cy, '#818cf8', {
+      blink, leftArm: -PI/5, rightArm: armR,
+      leftLeg: 0.15, rightLeg: -0.15,
+      leanX: Math.sin(t*0.7)*2
+    });
+
+    ctx.save();
+    ctx.fillStyle='rgba(129,140,248,0.15)';
+    ctx.strokeStyle='#818cf8';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.ellipse(70, cy+2, 18, 5, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function scene2(ctx, t){
+    ctx.clearRect(0,0,140,180);
+    const cy = 145;
+    const blink = Math.sin(t*0.28) > 0.95 ? 0.1 : 1;
+
+    const numDots = 5;
+    for(let i=0;i<numDots;i++){
+      const angle = t*1.2 + i*(TAU/numDots);
+      const r = 38;
+      const dx = Math.cos(angle)*r;
+      const dy = Math.sin(angle)*r*0.4;
+      const sz = 5+Math.sin(angle)*2;
+      const alpha = 0.3+Math.sin(angle+PI)*0.3;
+      ctx.save();
+      ctx.fillStyle=`rgba(251,191,36,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(70+dx, cy-55+dy, sz, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.strokeStyle='#fbbf24';
+    ctx.lineWidth=2;
+    ctx.setLineDash([3,3]);
+    ctx.lineDashOffset=-t*12%24;
+    ctx.beginPath();
+    ctx.arc(70, cy-55, 38, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    const magBob = Math.sin(t*2)*6;
+    ctx.save();
+    ctx.translate(92+Math.sin(t*1.5)*4, cy-72+magBob);
+    ctx.rotate(0.4+Math.sin(t*1.5)*0.2);
+    ctx.strokeStyle='#fbbf24';
+    ctx.lineWidth=2.5;
+    ctx.beginPath();
+    ctx.arc(0,0,11,0,TAU);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(8,8); ctx.lineTo(16,16);
+    ctx.stroke();
+    ctx.restore();
+
+    const armR = -PI*0.4 + Math.sin(t*2)*0.3;
+    drawPerson(ctx, 70, cy, '#fbbf24', {
+      blink, rightArm: armR, leftArm: -PI/5,
+      leftLeg: 0.1, rightLeg: -0.1,
+      leanAngle: Math.sin(t*0.8)*0.05
+    });
+
+    for(let i=0;i<3;i++){
+      const px = 25+i*35;
+      const pa = t*0.9+i*2.1;
+      const py = cy-90 + Math.sin(pa)*8;
+      ctx.save();
+      ctx.fillStyle=['#818cf8','#2dd4bf','#f472b6'][i];
+      ctx.globalAlpha=0.7;
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function scene3(ctx, t){
+    ctx.clearRect(0,0,140,180);
+    const cy = 145;
+    const blink = Math.sin(t*0.25) > 0.95 ? 0.1 : 1;
+
+    const bob = Math.sin(t*1.5)*3;
+
+    ctx.save();
+    ctx.fillStyle='rgba(45,212,191,0.1)';
+    ctx.strokeStyle='#2dd4bf';
+    ctx.lineWidth=1.5;
+    roundRect(ctx, 30, cy-86+bob, 80, 60, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.fillStyle='rgba(45,212,191,0.2)';
+    ctx.strokeStyle='#2dd4bf';
+    ctx.lineWidth=1;
+    roundRect(ctx, 36, cy-80+bob, 68, 12, 3);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+
+    const checkProg = Math.min(1,(Math.sin(t*1.5)+1)/2);
+    if(checkProg>0.1){
+      ctx.save();
+      ctx.strokeStyle='#2dd4bf';
+      ctx.lineWidth=3;
+      ctx.lineCap='round';
+      ctx.lineJoin='round';
+      ctx.beginPath();
+      ctx.moveTo(45, cy-58+bob);
+      ctx.lineTo(55, cy-48+bob);
+      ctx.lineTo(95, cy-72+bob);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    const sparkT = (t*0.8)%1;
+    for(let i=0;i<4;i++){
+      const sa = (TAU/4)*i + t*2;
+      const sr = 12+Math.sin(t*3+i)*4;
+      ctx.save();
+      ctx.fillStyle='#2dd4bf';
+      ctx.globalAlpha=(1-sparkT)*0.8;
+      ctx.beginPath();
+      ctx.arc(70+Math.cos(sa)*sr, cy-56+bob+Math.sin(sa)*sr*0.5, 2, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    drawPerson(ctx, 70, cy, '#2dd4bf', {
+      blink,
+      rightArm: -PI*0.6+Math.sin(t*2)*0.15,
+      leftArm: -PI/6,
+      leftLeg: 0.12, rightLeg: -0.12,
+      leanX: Math.sin(t*0.6)*1.5
+    });
+  }
+
+  function scene4(ctx, t){
+    ctx.clearRect(0,0,140,180);
+    const cy = 145;
+    const blink = Math.sin(t*0.22) > 0.95 ? 0.1 : 1;
+
+    const jumpH = Math.max(0,-Math.abs(Math.sin(t*1.5))*22+2);
+
+    const docBob = Math.sin(t*1.8)*5;
+    ctx.save();
+    ctx.fillStyle='rgba(192,132,252,0.12)';
+    ctx.strokeStyle='#c084fc';
+    ctx.lineWidth=1.5;
+    roundRect(ctx, 42, cy-92+docBob, 52, 64, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    for(let i=0;i<3;i++){
+      ctx.strokeStyle='rgba(192,132,252,0.4)';
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      ctx.moveTo(50, cy-80+i*10+docBob);
+      ctx.lineTo(86, cy-80+i*10+docBob);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle='#c084fc';
+    ctx.beginPath();
+    ctx.arc(70, cy-42+docBob, 8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle='#0d1117';
+    ctx.font='bold 10px Inter';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText('✓', 70, cy-42+docBob);
+    ctx.restore();
+
+    const confN = 6;
+    for(let i=0;i<confN;i++){
+      const cf = ((t*0.5+i/confN)%1);
+      const cx2 = 40+i*14+Math.sin(t*2+i)*8;
+      const cy2 = cy-110+cf*60;
+      ctx.save();
+      ctx.fillStyle=['#818cf8','#2dd4bf','#fbbf24','#f472b6','#818cf8','#2dd4bf'][i];
+      ctx.globalAlpha=(1-cf)*0.9;
+      ctx.translate(cx2, cy2);
+      ctx.rotate(t*3+i);
+      ctx.fillRect(-3,-2,6,4);
+      ctx.restore();
+    }
+
+    const jumpY = cy - jumpH;
+    drawPerson(ctx, 70, jumpY, '#c084fc', {
+      blink,
+      leftArm: -PI*0.7+Math.sin(t*3)*0.4,
+      rightArm: PI*0.6+Math.sin(t*3+1)*0.4,
+      leftLeg: 0.3+Math.sin(t*3)*0.2,
+      rightLeg: -0.3+Math.sin(t*3+0.5)*0.2,
+      leanAngle: Math.sin(t*1.5)*0.06
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+  }
+
+  const scenes = [
+    {id:'c1', fn:scene1},
+    {id:'c2', fn:scene2},
+    {id:'c3', fn:scene3},
+    {id:'c4', fn:scene4}
+  ];
+
+  const ctxs = scenes.map(s=>{
+    const el = document.getElementById(s.id);
+    if(!el) return null;
+    const ctx = el.getContext('2d');
+    return {ctx, fn:s.fn};
+  }).filter(Boolean);
+
+  function loop(){
+    t += 0.016;
+    ctxs.forEach(({ctx,fn})=>fn(ctx,t));
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
