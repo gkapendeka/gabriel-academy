@@ -440,6 +440,11 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
   const [actionModal, setActionModal] = useState({ isOpen: false, action: null });
   const [actionReason, setActionReason] = useState('');
   const [actionComments, setActionComments] = useState('');
+  
+  // Scope Approval State
+  const [scopeDecision, setScopeDecision] = useState('approve');
+  const [scopeReason, setScopeReason] = useState('Qualifications Verified');
+  const [scopeComments, setScopeComments] = useState('');
 
   useEffect(() => {
     fetchUserData();
@@ -488,36 +493,48 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
     setLoading(false);
   };
 
-  const handleApproveScopeRequest = async () => {
+  const handleScopeDecisionSubmit = async () => {
     if (!user.scope_requests) return;
     try {
-      const newLevelsSet = new Set(user.approved_levels || []);
-      if (user.scope_requests.levels) {
-        newLevelsSet.add(user.scope_requests.levels);
+      if (scopeDecision === 'approve') {
+        const newLevelsSet = new Set(user.approved_levels || []);
+        if (user.scope_requests.levels) {
+          newLevelsSet.add(user.scope_requests.levels);
+        }
+        
+        const newSubjectsSet = new Set(user.approved_subjects || []);
+        if (user.scope_requests.subjects) {
+          user.scope_requests.subjects.split(',').forEach(s => newSubjectsSet.add(s.trim()));
+        }
+
+        const { error } = await supabase.from('profiles').update({
+          approved_levels: Array.from(newLevelsSet),
+          approved_subjects: Array.from(newSubjectsSet),
+          scope_requests: null
+        }).eq('id', user.id);
+
+        if (error) throw error;
+        toast.success('Scope request approved and merged!');
+      } else {
+        const { error } = await supabase.from('profiles').update({
+          scope_requests: null
+        }).eq('id', user.id);
+
+        if (error) throw error;
+        toast.success(`Scope request rejected: ${scopeReason}`);
       }
-      
-      const newSubjectsSet = new Set(user.approved_subjects || []);
-      if (user.scope_requests.subjects) {
-        user.scope_requests.subjects.split(',').map(s => s.trim()).forEach(s => {
-          if (s) newSubjectsSet.add(s);
-        });
-      }
 
-      const newLevels = Array.from(newLevelsSet);
-      const newSubjects = Array.from(newSubjectsSet);
+      await supabase.from('messages').insert([{
+        job_id: null,
+        sender_id: adminProfile?.id,
+        receiver_id: user.id,
+        message: `Scope Request ${scopeDecision === 'approve' ? 'Approved' : 'Rejected'}. Reason: ${scopeReason}. ${scopeComments ? 'Comments: ' + scopeComments : ''}`,
+        is_internal: true
+      }]);
 
-      const { error } = await supabase.from('profiles').update({
-        approved_levels: newLevels,
-        approved_subjects: newSubjects,
-        scope_requests: null
-      }).eq('id', user.id);
-
-      if (error) throw error;
-      
-      onUpdate({ ...user, approved_levels: newLevels, approved_subjects: newSubjects, scope_requests: null });
-      alert('Scope request approved successfully!');
+      onUpdate();
     } catch (err) {
-      alert('Error approving scope: ' + err.message);
+      toast.error('Failed to process scope request: ' + err.message);
     }
   };
 
@@ -641,7 +658,45 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
                     <div style={{fontWeight: 600, fontSize: '14px', color: 'var(--gold)', marginBottom: '12px'}}>Pending Scope Request</div>
                     <div style={{fontSize: '13px', marginBottom: '8px'}}><strong>Levels Requested:</strong> {user.scope_requests.levels}</div>
                     <div style={{fontSize: '13px', marginBottom: '16px'}}><strong>Subjects Requested:</strong> {user.scope_requests.subjects}</div>
-                    <button className="btn btn-sm" style={{background: 'var(--gold)', color: 'black'}} onClick={handleApproveScopeRequest}>Approve & Merge</button>
+                    
+                    <div style={{background: 'var(--bg)', padding: '12px', borderRadius: '4px', marginBottom: '12px'}}>
+                      <div className="form-group">
+                        <label className="form-label">Decision</label>
+                        <select className="form-input" value={scopeDecision} onChange={e => setScopeDecision(e.target.value)}>
+                          <option value="approve">Approve & Merge Scope</option>
+                          <option value="reject">Reject Request</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Reasoning / Category</label>
+                        <select className="form-input" value={scopeReason} onChange={e => setScopeReason(e.target.value)}>
+                          {scopeDecision === 'approve' ? (
+                            <>
+                              <option>Qualifications Verified</option>
+                              <option>Interview Passed</option>
+                              <option>Exceptional Track Record</option>
+                              <option>Other</option>
+                            </>
+                          ) : (
+                            <>
+                              <option>Incomplete Qualifications</option>
+                              <option>Failed Verification</option>
+                              <option>Not Hiring for this Level</option>
+                              <option>Interview Required</option>
+                              <option>Other</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                      <div className="form-group" style={{marginBottom: 0}}>
+                        <label className="form-label">Internal Comments</label>
+                        <textarea className="form-input" rows="2" value={scopeComments} onChange={e => setScopeComments(e.target.value)} placeholder="Notes on this decision..."></textarea>
+                      </div>
+                    </div>
+
+                    <button className="btn btn-sm" style={{background: scopeDecision === 'approve' ? 'var(--gold)' : 'var(--red)', color: scopeDecision === 'approve' ? 'black' : 'white'}} onClick={handleScopeDecisionSubmit}>
+                      Submit Decision
+                    </button>
                   </div>
                 )}
               </div>
