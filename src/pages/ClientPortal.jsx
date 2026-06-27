@@ -769,7 +769,7 @@ export default function ClientPortal() {
         
         <div className="main">
           {activeTab === 'dashboard' && <TabDashboard jobs={jobs} profile={profile} setActiveTab={setActiveTab} setCheckoutJob={setCheckoutJob} setSelectedJob={setSelectedJob} handleDeleteRequest={handleDeleteRequest} />}
-          {activeTab === 'newjob' && <TabNewJob formData={formData} setFormData={setFormData} submitNewRequest={submitNewRequest} setActiveTab={setActiveTab} uploading={uploading} />}
+          {activeTab === 'newjob' && <TabNewJob formData={formData} setFormData={setFormData} submitNewRequest={submitNewRequest} setActiveTab={setActiveTab} uploading={uploading} taxonomy={taxonomy} />}
           {activeTab === 'myjobs' && <TabMyJobs jobs={jobs} setSelectedJob={setSelectedJob} setCheckoutJob={setCheckoutJob} handleDeleteRequest={handleDeleteRequest} />}
           {activeTab === 'payments' && <TabPayments payments={payments} loading={paymentsLoading} />}
           {activeTab === 'messages' && <TabMessages jobs={jobs} profile={profile} />}
@@ -847,7 +847,7 @@ function TabDashboard({ jobs, profile, setActiveTab, setCheckoutJob, setSelected
   );
 }
 
-function TabNewJob({ formData, setFormData, submitNewRequest, setActiveTab, uploading }) {
+function TabNewJob({ formData, setFormData, submitNewRequest, setActiveTab, uploading, taxonomy }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [checks, setChecks] = useState({ accurate: false, nocost: false, tos: false, confirmed_deadline: '' });
 
