@@ -2129,65 +2129,6 @@ export default function AdminPortal() {
         </div>
       </div>
 
-      {actionModal.isOpen && (
-        <div className="modal-bg">
-          <div className="modal">
-            <div className="modal-head">
-              <div className="modal-title">Confirm Action</div>
-              <button className="close-btn" onClick={() => setActionModal({ isOpen: false, action: null })}>×</button>
-            </div>
-            <div className="modal-body">
-              <div style={{marginBottom: '16px'}}>
-                You are about to <strong>{formatStatus(actionModal.action)}</strong> the account for {user.display_name}.
-                Please provide a reason and any relevant comments for the audit log.
-              </div>
-              <div className="form-group">
-                <label className="form-label">Reason</label>
-                <select className="form-input" value={actionReason} onChange={e => setActionReason(e.target.value)}>
-                  <option value="">-- Select Reason --</option>
-                  {actionModal.action === 'reset' && (
-                    <>
-                      <option value="User Request">User Request</option>
-                      <option value="Security Breach / Suspicious Activity">Security Breach / Suspicious Activity</option>
-                      <option value="Routine Credential Rotation">Routine Credential Rotation</option>
-                    </>
-                  )}
-                  {actionModal.action === 'suspend' && (
-                    <>
-                      <option value="Policy Violation">Policy Violation</option>
-                      <option value="Payment Dispute">Payment Dispute</option>
-                      <option value="Poor QA Performance">Poor QA Performance</option>
-                      <option value="Temporary Hold">Temporary Hold</option>
-                    </>
-                  )}
-                  {actionModal.action === 'activate' && (
-                    <>
-                      <option value="Identity Verified">Identity Verified</option>
-                      <option value="Suspension Lifted">Suspension Lifted</option>
-                      <option value="Dispute Resolved">Dispute Resolved</option>
-                    </>
-                  )}
-                  {actionModal.action === 'archive' && (
-                    <>
-                      <option value="User Requested Deletion">User Requested Deletion</option>
-                      <option value="Inactive Account Cleanup">Inactive Account Cleanup</option>
-                      <option value="Permanent Ban">Permanent Ban</option>
-                    </>
-                  )}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Additional Comments</label>
-                <textarea className="form-input" value={actionComments} onChange={e => setActionComments(e.target.value)} placeholder="Provide more details..."></textarea>
-              </div>
-            </div>
-            <div className="modal-foot">
-              <button className="btn btn-ghost" onClick={() => setActionModal({ isOpen: false, action: null })}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleActionSubmit}>Confirm & Execute</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showCreateJobModal && (
         <div className="modal-bg">
