@@ -1481,6 +1481,42 @@ export default function AdminPortal() {
   const [showCreateJobModal, setShowCreateJobModal] = useState(false);
 
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(profile?.id);
+  const [liveFeed, setLiveFeed] = useState([]);
+  const [liveFeedLoading, setLiveFeedLoading] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'live_feed') {
+      const fetchFeed = async () => {
+        setLiveFeedLoading(true);
+        const { data: jobsData } = await supabase.from('jobs').select('id, job_ref, title, status, created_at, client:client_id(display_name)').order('created_at', { ascending: false }).limit(20);
+        const { data: messagesData } = await supabase.from('messages').select('id, job_id, body, created_at, sender:sender_id(display_name)').eq('is_internal', true).order('created_at', { ascending: false }).limit(30);
+        const { data: profilesData } = await supabase.from('profiles').select('id, display_name, role, created_at').order('created_at', { ascending: false }).limit(20);
+        
+        let events = [];
+        if (jobsData) {
+          jobsData.forEach(j => events.push({ id: `job-${j.id}`, type: 'job', title: 'New Job Created', body: `${j.job_ref}: ${j.title} was created by ${j.client?.display_name || 'Client'}.`, created_at: j.created_at, link: '/admin' }));
+        }
+        if (messagesData) {
+          messagesData.forEach(m => {
+            if (m.body.startsWith('STATUS_UPDATE:')) {
+              events.push({ id: `msg-${m.id}`, type: 'status', title: 'Job Status Updated', body: `Job status changed to ${m.body.split(':')[1].toUpperCase()} by ${m.sender?.display_name || 'System'}.`, created_at: m.created_at, link: '/admin' });
+            } else {
+              events.push({ id: `msg-${m.id}`, type: 'message', title: 'Internal Note / Action', body: `${m.sender?.display_name || 'System'}: ${m.body}`, created_at: m.created_at, link: '/admin' });
+            }
+          });
+        }
+        if (profilesData) {
+          profilesData.forEach(p => events.push({ id: `user-${p.id}`, type: 'user', title: 'New User Registered', body: `${p.display_name} registered as a ${p.role}.`, created_at: p.created_at, link: '/admin' }));
+        }
+        
+        events.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setLiveFeed(events.slice(0, 50));
+        setLiveFeedLoading(false);
+      };
+      fetchFeed();
+    }
+  }, [activeTab]);
+
   const [clientsList, setClientsList] = useState([]);
   const [newJobData, setNewJobData] = useState({ client_id: '', manual_client_name: '', client_reference: '', title: '', subject: '', academic_level: 'Undergraduate', pages: '', reference_style: 'Harvard', description: '', budget: '', deadline: '' });
   const [manualJobFile, setManualJobFile] = useState(null);
@@ -1881,22 +1917,24 @@ export default function AdminPortal() {
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '800px'}}>
-                {notifications.length === 0 ? (
+                {liveFeedLoading ? (
+                  <div className="card-box empty" style={{padding: '32px', textAlign: 'center', color: 'var(--muted)'}}>Loading live feed...</div>
+                ) : liveFeed.length === 0 ? (
                   <div className="card-box empty" style={{padding: '32px', textAlign: 'center', color: 'var(--muted)'}}>No activities to display.</div>
                 ) : (
-                  notifications.map(notif => (
-                    <div key={notif.id} className="card-box" style={{display: 'flex', gap: '16px', alignItems: 'flex-start', padding: '16px', opacity: notif.is_read ? 0.7 : 1, borderLeft: notif.is_read ? '1px solid var(--border)' : '3px solid var(--blue)'}}>
+                  liveFeed.map(notif => (
+                    <div key={notif.id} className="card-box" style={{display: 'flex', gap: '16px', alignItems: 'flex-start', padding: '16px', borderLeft: '3px solid var(--blue)'}}>
                       <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0}}>
-                        {notif.type === 'alert' ? '🔔' : notif.type === 'message' ? '💬' : '📌'}
+                        {notif.type === 'job' ? '📄' : notif.type === 'status' ? '🔄' : notif.type === 'user' ? '👤' : '💬'}
                       </div>
                       <div style={{flex: 1}}>
                         <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
-                          <div style={{fontWeight: 600, fontSize: '14px', color: notif.is_read ? 'var(--text)' : 'var(--blue)'}}>{notif.title}</div>
+                          <div style={{fontWeight: 600, fontSize: '14px', color: 'var(--blue)'}}>{notif.title}</div>
                           <div style={{fontSize: '11px', color: 'var(--muted)'}}>{new Date(notif.created_at).toLocaleString()}</div>
                         </div>
-                        <div style={{fontSize: '13px', color: 'var(--muted)', lineHeight: '1.5', marginBottom: notif.link ? '8px' : '0'}}>{notif.body}</div>
+                        <div style={{fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: notif.link ? '8px' : '0'}}>{notif.body}</div>
                         {notif.link && (
-                          <div style={{fontSize: '12px', color: 'var(--blue)', cursor: 'pointer', fontWeight: 500}} onClick={() => { markAsRead(notif.id); if (notif.link === '/admin') setActiveTab('pipeline'); }}>View Details →</div>
+                          <div style={{fontSize: '12px', color: 'var(--blue)', cursor: 'pointer', fontWeight: 500}} onClick={() => setActiveTab('pipeline')}>View Details →</div>
                         )}
                       </div>
                     </div>
