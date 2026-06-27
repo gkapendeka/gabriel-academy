@@ -364,24 +364,62 @@ function JobModal({ job, profile, onClose }) {
                   // Sort chronologically
                   events.sort((a, b) => a.date - b.date);
 
-                  return events.map((event, idx) => {
-                    // Check if this is the last event to show a continuous line or not
-                    const isLast = idx === events.length - 1;
-                    return (
-                      <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLast ? '0' : '16px'}}>
-                        {!isLast && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
-                        <div style={{width: '24px', height: '24px', borderRadius: '50%', background: event.color === 'var(--card)' ? 'var(--card)' : event.color, border: event.color === 'var(--card)' ? '2px solid var(--gold)' : 'none', color: event.color === 'var(--card)' ? 'var(--gold)' : (event.color === 'var(--blue)' ? '#fff' : '#000'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                          {event.icon}
-                        </div>
-                        <div style={{flex: 1}}>
-                          <div style={{fontWeight: 600, fontSize: '13px', color: event.color === 'var(--green)' ? 'var(--green)' : (event.color === 'var(--blue)' ? 'var(--blue)' : 'var(--text)')}}>
-                            {event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date.toLocaleString()})</span>
+                  // Calculate unfulfilled standard pipeline steps
+                  const upcoming = [];
+                  const s = job.status;
+                  const statusWeight = {
+                    'new': 0, 'pending': 1, 'paid': 1, 'posted': 1,
+                    'active': 2, 'submitted': 3, 'qa_review': 3, 'qa_failed': 3,
+                    'delivered': 4, 'completed': 4,
+                    'cancelled': 99, 'disputed': 99
+                  };
+                  
+                  const currWeight = statusWeight[s] || 0;
+                  
+                  if (currWeight < 1) upcoming.push({ title: 'Sourcing Consultant', summary: 'Gabriel Academics will match you with the best consultant.' });
+                  if (currWeight < 2) upcoming.push({ title: 'Consultant Assigned', summary: 'An expert consultant will actively work on your request.' });
+                  if (currWeight < 3) upcoming.push({ title: 'QA Review & Follow-up', summary: 'Our Academic Team will review the submitted work for quality.' });
+                  if (currWeight < 4) upcoming.push({ title: 'Order Delivered', summary: 'Your final work will be ready to download!' });
+
+
+                  return (
+                    <>
+                      {events.map((event, idx) => {
+                        const isLastEvent = idx === events.length - 1 && upcoming.length === 0;
+                        return (
+                          <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLastEvent ? '0' : '16px'}}>
+                            {!isLastEvent && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
+                            <div style={{width: '24px', height: '24px', borderRadius: '50%', background: event.color === 'var(--card)' ? 'var(--card)' : event.color, border: event.color === 'var(--card)' ? '2px solid var(--gold)' : 'none', color: event.color === 'var(--card)' ? 'var(--gold)' : (event.color === 'var(--blue)' ? '#fff' : '#000'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
+                              {event.icon}
+                            </div>
+                            <div style={{flex: 1}}>
+                              <div style={{fontWeight: 600, fontSize: '13px', color: event.color === 'var(--green)' ? 'var(--green)' : (event.color === 'var(--blue)' ? 'var(--blue)' : 'var(--text)')}}>
+                                {event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date.toLocaleString()})</span>
+                              </div>
+                              <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
+                            </div>
                           </div>
-                          <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
-                        </div>
-                      </div>
-                    );
-                  });
+                        );
+                      })}
+                      {upcoming.map((u, idx) => {
+                        const isLastUpcoming = idx === upcoming.length - 1;
+                        return (
+                          <div key={'up'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLastUpcoming ? '0' : '16px', opacity: 0.5}}>
+                            {!isLastUpcoming && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
+                            <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', border: '2px solid var(--muted)', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
+                              ○
+                            </div>
+                            <div style={{flex: 1}}>
+                              <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--muted)'}}>
+                                {u.title} <span style={{fontSize: '11px', fontWeight: 400}}>(Pending)</span>
+                              </div>
+                              <div style={{fontSize: '12px', color: 'var(--muted)'}}>{u.summary}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
                 })()}
               </div>
             </div>
