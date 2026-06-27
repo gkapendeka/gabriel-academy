@@ -15,8 +15,8 @@ export function useJobs(role, userId) {
         if (role === 'client') {
           query = query.eq('client_id', userId);
         } else if (role === 'consultant') {
-          // Consultants see jobs they are assigned to, or jobs that are posted/pending
-          query = query.or(`consultant_id.eq.${userId},status.in.(posted,pending)`);
+          // Consultants see jobs they are assigned to, or jobs that are posted
+          query = query.or(`consultant_id.eq.${userId},status.eq.posted`);
         }
 
         const { data, error } = await query;

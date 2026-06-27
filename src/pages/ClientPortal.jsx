@@ -29,7 +29,7 @@ const fmt = (n) => 'R' + parseFloat(n || 0).toLocaleString('en-ZA', {minimumFrac
 const fmtDate = (d) => { if (!d) return '—'; return new Date(d).toLocaleDateString('en-ZA', {day:'2-digit',month:'short',year:'numeric'}); };
 const daysLeft = (d) => { if (!d) return '—'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 0 ? 'Overdue!' : diff + ' day' + (diff === 1 ? '' : 's'); };
 const daysLeftColor = (d) => { if (!d) return 'var(--muted)'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 2 ? 'var(--red)' : diff <= 5 ? 'var(--gold)' : 'var(--muted)'; };
-const statusLabel = (s) => { const m = {new:'New',posted:'Posted',pending:'Awaiting Consultant',active:'In Progress',submitted:'Submitted',qa_review:'QA Review',qa_failed:'QA Failed',delivered:'Delivered',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
+const statusLabel = (s) => { const m = {new:'New',paid:'Awaiting Consultant',posted:'Posted',pending:'Awaiting Consultant',active:'In Progress',submitted:'Submitted',qa_review:'QA Review',qa_failed:'QA Failed',delivered:'Delivered',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
 
 function StatusBadge({ status }) {
   const isGreen = status === 'delivered';
@@ -175,7 +175,7 @@ function JobModal({ job, profile, onClose }) {
             <div className="card-box">
               <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                 <div className="card-box-title" style={{marginBottom: isEditing ? '12px' : 0}}>{localJob.title}</div>
-                {['new', 'posted', 'pending'].includes(localJob.status) && (
+                {['new', 'posted', 'pending', 'paid'].includes(localJob.status) && (
                   <button className="btn btn-ghost btn-sm" onClick={() => setIsEditing(!isEditing)}>
                     {isEditing ? 'Cancel Edit' : 'Edit Job'}
                   </button>
@@ -764,7 +764,7 @@ export default function ClientPortal() {
 }
 
 function TabDashboard({ jobs, profile, setActiveTab, setCheckoutJob, setSelectedJob, handleDeleteRequest }) {
-  const activeCount = jobs.filter(j => ['posted','pending','active','submitted','qa_review'].includes(j.status)).length;
+  const activeCount = jobs.filter(j => ['posted','pending','paid','active','submitted','qa_review'].includes(j.status)).length;
   const doneCount = jobs.filter(j => j.status === 'delivered').length;
   const spent = jobs.reduce((s, j) => s + parseFloat(j.client_budget || 0), 0);
   const recentJobs = jobs.slice(0, 5);
@@ -817,7 +817,7 @@ function TabDashboard({ jobs, profile, setActiveTab, setCheckoutJob, setSelected
                 <button className="btn btn-primary btn-xs" onClick={(e) => { e.stopPropagation(); setSelectedJob(j); }}>{icon('download')} Download & Rate</button>
               </div>
             )}
-            {['posted','pending'].includes(j.status) && (
+            {['posted','pending','paid'].includes(j.status) && (
               <div style={{marginTop: '8px', fontSize: '12px', color: 'var(--gold)'}}>Gabriel Academics is finding the best consultant for your assignment...</div>
             )}
           </div>

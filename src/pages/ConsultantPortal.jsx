@@ -531,7 +531,7 @@ export default function ConsultantPortal() {
   }
 
   const availableJobs = jobs.filter(j => j.status === 'posted');
-  const myActiveJobs = jobs.filter(j => j.status === 'active' || j.status === 'pending' || j.status === 'qa_failed' || j.status === 'submitted');
+  const myActiveJobs = jobs.filter(j => j.status === 'active' || j.status === 'qa_failed' || j.status === 'submitted');
   const historyJobs = jobs.filter(j => j.status === 'delivered' || j.status === 'completed');
 
   return (
