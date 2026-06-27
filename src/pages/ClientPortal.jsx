@@ -558,7 +558,7 @@ export default function ClientPortal() {
   const [taxonomy, setTaxonomy] = useState([]);
   
   const [formData, setFormData] = useState({
-    title: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: []
+    title: '', institution: '', custom_institution: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: []
   });
   const [uploading, setUploading] = useState(false);
   
@@ -655,7 +655,7 @@ export default function ClientPortal() {
 
       const { error } = await supabase.from('jobs').insert([{
         title: formData.title,
-        subject: formData.subject === 'Other' ? formData.custom_subject : formData.subject,
+        subject: `${formData.institution === 'Other (Private College/Manual)' ? formData.custom_institution : formData.institution} | ${formData.subject === 'Other' ? formData.custom_subject : formData.subject}`,
         level: formData.level,
         faculty: formData.faculty || null,
         pages: formData.pages,
@@ -670,7 +670,7 @@ export default function ClientPortal() {
       }]);
       if (error) throw error;
       showToast('Request submitted successfully!', 'success');
-      setFormData({ title: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: [] });
+      setFormData({ title: '', institution: '', custom_institution: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: [] });
       setActiveTab('dashboard');
     } catch (err) {
       showToast('Error creating request: ' + err.message, 'error');
@@ -887,30 +887,31 @@ function TabNewJob({ formData, setFormData, submitNewRequest, setActiveTab, uplo
         <form onSubmit={handleInitialSubmit}>
           <div className="form-group"><label className="form-label">Assignment Title / Topic *</label><input required className="form-input" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Research Proposal on AI in South African Banking" /></div>
           <div className="form-row">
+            <div className="form-group"><label className="form-label">Institution (University/College) *</label>
+              <select required className="form-input" value={formData.institution} onChange={e => setFormData({...formData, institution: e.target.value})}>
+                <option value="">Select institution...</option>
+                {SA_UNIVERSITIES.map((uni, idx) => <option key={idx} value={uni}>{uni}</option>)}
+              </select>
+              {formData.institution === 'Other (Private College/Manual)' && (
+                <input required type="text" className="form-input" style={{marginTop: '8px'}} placeholder="Please specify your institution..." value={formData.custom_institution} onChange={e => setFormData({...formData, custom_institution: e.target.value})} />
+              )}
+            </div>
             <div className="form-group"><label className="form-label">Academic Level *</label>
-              <select required className="form-input" value={formData.level} onChange={e => setFormData({...formData, level: e.target.value, faculty: '', subject: ''})}>
+              <select required className="form-input" value={formData.level} onChange={e => setFormData({...formData, level: e.target.value, subject: ''})}>
                 <option value="">Select level...</option>
                 {taxonomy.map((t, idx) => <option key={idx} value={t.level}>{t.level}</option>)}
               </select>
             </div>
-            
-            {/* Find selected level in taxonomy */}
-            {(() => {
-              const selectedTax = taxonomy.find(t => t.level === formData.level);
-              if (!selectedTax) return <div className="form-group"></div>;
-              
-              if (selectedTax.faculties && selectedTax.faculties.length > 0) {
-                return (
-                  <div className="form-group"><label className="form-label">Faculty *</label>
-                    <select required className="form-input" value={formData.faculty} onChange={e => setFormData({...formData, faculty: e.target.value, subject: ''})}>
-                      <option value="">Select faculty...</option>
-                      {selectedTax.faculties.map((f, idx) => <option key={idx} value={f.name}>{f.name}</option>)}
-                    </select>
-                  </div>
-                );
-              }
-              return <div className="form-group"></div>;
-            })()}
+          </div>
+          <div className="form-group"><label className="form-label">Faculty *</label>
+            <select required className="form-input" value={formData.faculty} onChange={e => setFormData({...formData, faculty: e.target.value})}>
+              <option value="">Select faculty...</option>
+              {Object.entries(SA_FACULTIES).map(([category, faculties]) => (
+                <optgroup key={category} label={category}>
+                  {faculties.map((f, idx) => <option key={idx} value={f}>{f}</option>)}
+                </optgroup>
+              ))}
+            </select>
           </div>
 
           <div className="form-group"><label className="form-label">Subject / Discipline *</label>
@@ -920,17 +921,20 @@ function TabNewJob({ formData, setFormData, submitNewRequest, setActiveTab, uplo
                 const selectedTax = taxonomy.find(t => t.level === formData.level);
                 if (!selectedTax) return null;
                 
-                let subjects = [];
-                if (selectedTax.faculties && selectedTax.faculties.length > 0) {
-                  const selFac = selectedTax.faculties.find(f => f.name === formData.faculty);
-                  if (selFac) subjects = selFac.subjects || [];
-                } else {
-                  subjects = selectedTax.subjects || [];
+                // Since faculty is decoupled from taxonomy, aggregate all subjects for this level
+                let subjects = new Set();
+                if (selectedTax.subjects) {
+                  selectedTax.subjects.forEach(s => subjects.add(s));
+                }
+                if (selectedTax.faculties) {
+                  selectedTax.faculties.forEach(f => {
+                    if (f.subjects) f.subjects.forEach(s => subjects.add(s));
+                  });
                 }
                 
                 return (
                   <>
-                    {subjects.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+                    {Array.from(subjects).sort().map((s, idx) => <option key={idx} value={s}>{s}</option>)}
                     <option value="Other">Other</option>
                   </>
                 );
