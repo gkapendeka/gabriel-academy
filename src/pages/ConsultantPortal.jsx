@@ -279,6 +279,10 @@ export default function ConsultantPortal() {
   const { jobs, loading: jobsLoading } = useJobs(profile?.role, profile?.id);
   const [selectedJob, setSelectedJob] = useState(null);
   const [activeTab, setActiveTab] = useState('board');
+  const [profileForm, setProfileForm] = useState({ phone: '', display_name: '', linkedin_url: '' });
+  const [bankForm, setBankForm] = useState({ bank_name: '', account_number: '', branch_code: '', account_type: 'Checking' });
+  const [requestScope, setRequestScope] = useState({ subjects: '', levels: '' });
+  const [isUploading, setIsUploading] = useState(false);
   const [settings, setSettings] = useState({});
 
   React.useEffect(() => {
@@ -290,6 +294,104 @@ export default function ConsultantPortal() {
       }
     });
   }, []);
+
+  React.useEffect(() => {
+    if (profile) {
+      setProfileForm({
+        phone: profile.phone || '',
+        display_name: profile.display_name || '',
+        linkedin_url: profile.linkedin_url || ''
+      });
+      if (profile.bank_details) {
+        setBankForm({
+          bank_name: profile.bank_details.bank_name || '',
+          account_number: profile.bank_details.account_number || '',
+          branch_code: profile.bank_details.branch_code || '',
+          account_type: profile.bank_details.account_type || 'Checking'
+        });
+      }
+    }
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase.from('profiles').update({
+        phone: profileForm.phone,
+        display_name: profileForm.display_name,
+        linkedin_url: profileForm.linkedin_url
+      }).eq('id', profile.id);
+      if (error) throw error;
+      toast.success('Personal details saved!');
+    } catch (err) {
+      toast.error('Error saving profile: ' + err.message);
+    }
+  };
+
+  const handleSaveBank = async () => {
+    try {
+      const { error } = await supabase.from('profiles').update({
+        bank_details: bankForm
+      }).eq('id', profile.id);
+      if (error) throw error;
+      toast.success('Banking details saved!');
+    } catch (err) {
+      toast.error('Error saving banking details: ' + err.message);
+    }
+  };
+
+  const handleSendScopeRequest = async () => {
+    if (!requestScope.subjects && !requestScope.levels) return;
+    try {
+      const reqData = {
+        subjects: requestScope.subjects,
+        levels: requestScope.levels,
+        requested_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase.from('profiles').update({
+        scope_requests: reqData
+      }).eq('id', profile.id);
+      
+      if (error) throw error;
+      
+      // Notify Admin
+      await supabase.rpc('notify_admins', {
+        p_title: 'New Scope Request',
+        p_body: `${profile.display_name} has requested new subjects/levels.`,
+        p_link: '/admin'
+      });
+      
+      toast.success('Request sent to Admin!');
+      setRequestScope({ subjects: '', levels: '' });
+    } catch (err) {
+      toast.error('Error sending request: ' + err.message);
+    }
+  };
+
+  const handleUploadQual = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${profile.id}_qual_${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage.from('qualifications').upload(fileName, file);
+      if (uploadError) throw uploadError;
+      
+      const { error: updateError } = await supabase.from('profiles').update({
+        qualifications_url: fileName
+      }).eq('id', profile.id);
+      if (updateError) throw updateError;
+      
+      toast.success('Qualification uploaded!');
+      // Update local profile representation
+      profile.qualifications_url = fileName;
+    } catch (err) {
+      toast.error('Error uploading file: ' + err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -449,7 +551,7 @@ export default function ConsultantPortal() {
             markAsRead={markAsRead} 
             markAllAsRead={markAllAsRead} 
           />
-          <div className="user-chip">
+          <div className="user-chip" onClick={() => setActiveTab('profile')} style={{cursor: 'pointer'}}>
             <div className="user-av">{profile?.display_name?.charAt(0) || 'C'}</div>
             <div className="user-name">{profile?.display_name || 'Consultant'}</div>
           </div>
@@ -466,6 +568,9 @@ export default function ConsultantPortal() {
             <div className={`nav-item ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')}>My Active Jobs</div>
             <div className={`nav-item ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>Job History</div>
             <div className={`nav-item ${activeTab === 'earnings' ? 'active' : ''}`} onClick={() => setActiveTab('earnings')}>Earnings & Payouts</div>
+            
+            <div className="nav-label" style={{marginTop: '24px'}}>Settings</div>
+            <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>My Profile</div>
           </div>
         </div>
         
@@ -589,6 +694,135 @@ export default function ConsultantPortal() {
                 <div style={{fontSize: '14px', color: 'var(--gold)', marginBottom: '4px'}}>Current Wallet Balance</div>
                 <div style={{fontSize: '32px', fontWeight: 700, color: 'var(--gold)'}}>R{profile.wallet_balance || 0}</div>
                 <div style={{fontSize: '12px', color: 'var(--muted)', marginTop: '8px'}}>Payouts are processed automatically when the admin approves them.</div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'profile' && (
+            <>
+              <div className="page-header">
+                <div className="page-title">My Profile</div>
+                <div className="page-sub">Manage your personal information, credentials, and settings.</div>
+              </div>
+              
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start'}}>
+                {/* Column 1 */}
+                <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+                  
+                  {/* Personal Details */}
+                  <div className="card-box">
+                    <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', color: 'var(--gold)'}}>Personal Details</div>
+                    <div className="form-group">
+                      <label className="form-label">Display Name</label>
+                      <input className="form-input" value={profileForm.display_name} onChange={e => setProfileForm({...profileForm, display_name: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Phone Number</label>
+                      <input className="form-input" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">LinkedIn URL</label>
+                      <input className="form-input" value={profileForm.linkedin_url} onChange={e => setProfileForm({...profileForm, linkedin_url: e.target.value})} />
+                    </div>
+                    <button className="btn btn-primary" onClick={handleSaveProfile}>Save Details</button>
+                  </div>
+
+                  {/* Academic Credentials */}
+                  <div className="card-box">
+                    <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', color: 'var(--gold)'}}>Academic Credentials</div>
+                    <div style={{marginBottom: '16px'}}>
+                      <div className="form-label">Current Qualification</div>
+                      <div style={{fontWeight: 500}}>{profile.qualification || 'Not provided'}</div>
+                    </div>
+                    
+                    {profile.qualifications_url && (
+                      <div style={{marginBottom: '16px', padding: '12px', background: 'var(--bg)', borderRadius: '6px', border: '1px solid var(--border)'}}>
+                        <div style={{fontSize: '13px', fontWeight: 600}}>Uploaded Document:</div>
+                        <a href={`${supabase.storage.from('qualifications').getPublicUrl(profile.qualifications_url).data.publicUrl}`} target="_blank" rel="noreferrer" style={{color: 'var(--blue)', fontSize: '13px', wordBreak: 'break-all'}}>{profile.qualifications_url}</a>
+                      </div>
+                    )}
+                    
+                    <div className="form-group">
+                      <label className="form-label">Upload New Credential (PDF/IMG)</label>
+                      <input type="file" className="form-input" onChange={handleUploadQual} disabled={isUploading} />
+                      {isUploading && <div style={{fontSize: '12px', color: 'var(--blue)', marginTop: '4px'}}>Uploading...</div>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2 */}
+                <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+                  
+                  {/* Subjects & Levels */}
+                  <div className="card-box">
+                    <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', color: 'var(--gold)'}}>Subjects & Levels</div>
+                    
+                    <div style={{marginBottom: '16px', padding: '12px', background: 'rgba(59,130,246,0.05)', border: '1px solid var(--blue)', borderRadius: '8px'}}>
+                      <div style={{fontSize: '12px', color: 'var(--blue)', fontWeight: 600, marginBottom: '8px'}}>APPROVED LEVELS</div>
+                      <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                        {profile.approved_levels && profile.approved_levels.length > 0 ? profile.approved_levels.map(l => (
+                          <div key={l} className="badge" style={{background: 'var(--blue)', color: 'white'}}>{l}</div>
+                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>None</div>}
+                      </div>
+                      
+                      <div style={{fontSize: '12px', color: 'var(--blue)', fontWeight: 600, marginTop: '16px', marginBottom: '8px'}}>APPROVED SUBJECTS</div>
+                      <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                        {profile.approved_subjects && profile.approved_subjects.length > 0 ? profile.approved_subjects.map(s => (
+                          <div key={s} className="badge" style={{background: 'var(--blue)', color: 'white'}}>{s}</div>
+                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>None</div>}
+                      </div>
+                    </div>
+                    
+                    <div style={{borderTop: '1px solid var(--border)', paddingTop: '16px'}}>
+                      <div style={{fontWeight: 600, fontSize: '14px', marginBottom: '12px'}}>Apply for More Subjects/Levels</div>
+                      <div className="form-note" style={{marginBottom: '12px'}}>Requests will be reviewed by the Administration team.</div>
+                      
+                      {profile.scope_requests && (
+                        <div style={{marginBottom: '16px', padding: '8px 12px', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--gold)', borderRadius: '6px', fontSize: '13px', color: 'var(--gold)'}}>
+                          You have a pending request submitted on {new Date(profile.scope_requests.requested_at).toLocaleDateString()}.
+                        </div>
+                      )}
+                      
+                      <div className="form-group">
+                        <label className="form-label">Additional Subjects</label>
+                        <input className="form-input" placeholder="e.g. Advanced Calculus, Physics" value={requestScope.subjects} onChange={e => setRequestScope({...requestScope, subjects: e.target.value})} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Additional Levels</label>
+                        <input className="form-input" placeholder="e.g. Masters, PhD" value={requestScope.levels} onChange={e => setRequestScope({...requestScope, levels: e.target.value})} />
+                      </div>
+                      <button className="btn btn-sm" style={{background: 'transparent', border: '1px solid var(--gold)', color: 'var(--gold)'}} onClick={handleSendScopeRequest}>Submit Request</button>
+                    </div>
+                  </div>
+
+                  {/* Banking Details */}
+                  <div className="card-box">
+                    <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', color: 'var(--gold)'}}>Banking Details</div>
+                    <div className="form-group">
+                      <label className="form-label">Bank Name</label>
+                      <input className="form-input" value={bankForm.bank_name} onChange={e => setBankForm({...bankForm, bank_name: e.target.value})} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Account Number</label>
+                      <input className="form-input" value={bankForm.account_number} onChange={e => setBankForm({...bankForm, account_number: e.target.value})} />
+                    </div>
+                    <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+                      <div className="form-group">
+                        <label className="form-label">Branch Code</label>
+                        <input className="form-input" value={bankForm.branch_code} onChange={e => setBankForm({...bankForm, branch_code: e.target.value})} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Account Type</label>
+                        <select className="form-input" value={bankForm.account_type} onChange={e => setBankForm({...bankForm, account_type: e.target.value})}>
+                          <option value="Checking">Checking / Cheque</option>
+                          <option value="Savings">Savings</option>
+                        </select>
+                      </div>
+                    </div>
+                    <button className="btn btn-primary" onClick={handleSaveBank}>Securely Save Bank Details</button>
+                  </div>
+                  
+                </div>
               </div>
             </>
           )}
