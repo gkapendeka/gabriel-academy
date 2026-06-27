@@ -104,6 +104,13 @@ function JobModal({ job, profile, onClose, onAccept, onSubmitWork, onRequestScop
               </div>
             )}
 
+            {job.status === 'pending' && (
+              <div className="card-box" style={{borderColor: 'var(--blue)', background: 'rgba(59,130,246,0.05)', marginTop: '20px'}}>
+                <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '4px'}}>Awaiting Admin Approval</div>
+                <div style={{fontSize: '13px'}}>You have requested this job. It is currently awaiting scope approval from the administration team before you can begin work.</div>
+              </div>
+            )}
+
             {job.status === 'posted' && (
               <div className="shield-banner">
                 <span style={{fontSize: '20px'}}>🛡️</span>
@@ -588,7 +595,7 @@ export default function ConsultantPortal() {
   }
 
   const availableJobs = jobs.filter(j => j.status === 'posted');
-  const myActiveJobs = jobs.filter(j => j.status === 'active' || j.status === 'qa_failed' || j.status === 'submitted');
+  const myActiveJobs = jobs.filter(j => j.status === 'pending' || j.status === 'active' || j.status === 'qa_failed' || j.status === 'submitted');
   const historyJobs = jobs.filter(j => j.status === 'delivered' || j.status === 'completed');
 
   return (
