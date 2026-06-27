@@ -462,6 +462,27 @@ export default function ConsultantPortal() {
         </div>
         
         <div className="main">
+          {profile?.is_verified && (
+            <div style={{background: 'rgba(59,130,246,0.1)', border: '1px solid var(--blue)', borderRadius: '8px', padding: '16px', marginBottom: '24px'}}>
+              <div style={{fontSize: '16px', fontWeight: 700, color: 'var(--blue)', marginBottom: '8px'}}>Welcome to the Gabriel Academics Team, {profile.display_name}!</div>
+              <div style={{fontSize: '13px', color: 'var(--text)', marginBottom: '12px'}}>Your consultant application has been verified. You are now cleared to accept jobs on the Mission Board.</div>
+              <div style={{display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '12px'}}>
+                <div>
+                  <div style={{fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px'}}>Approved Levels</div>
+                  <div style={{fontSize: '13px', fontWeight: 500}}>{profile.approved_levels?.join(', ') || profile.academic_level || 'General'}</div>
+                </div>
+                <div>
+                  <div style={{fontSize: '11px', color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px'}}>Approved Subjects</div>
+                  <div style={{fontSize: '13px', fontWeight: 500}}>{profile.approved_subjects?.join(', ') || profile.subjects || 'General'}</div>
+                </div>
+              </div>
+              <div style={{background: 'rgba(239,68,68,0.1)', border: '1px solid var(--red)', borderRadius: '6px', padding: '10px 14px', fontSize: '12px', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <span style={{fontSize: '16px'}}>⚠️</span> 
+                <span>Action Required: Please ensure your profile is fully up to date. You may still need to provide your Banking Details or verify your Qualifications.</span>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'board' && (
             <>
               <div className="page-header">

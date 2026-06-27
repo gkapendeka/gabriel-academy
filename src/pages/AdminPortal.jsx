@@ -669,16 +669,63 @@ function UsersTab({ adminProfile, users, setUsers, role }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({ email: '', password: '', role: 'client', display_name: '' });
 
-  const handleVerify = async (userId, userEmail, userName) => {
-    const { error } = await supabase.from('profiles').update({ is_verified: true }).eq('id', userId);
+  const [verifyingUser, setVerifyingUser] = useState(null);
+  
+  // Verification Checklist State
+  const [checklist, setChecklist] = useState({
+    id_verified: false,
+    qualifications_verified: false,
+    experience_linkedin_checked: false,
+    rules_agreed: false
+  });
+  const [verificationNotes, setVerificationNotes] = useState('');
+  const [approvedSubjects, setApprovedSubjects] = useState('');
+  const [approvedLevels, setApprovedLevels] = useState('');
+
+  const openVerifyModal = (user) => {
+    setVerifyingUser(user);
+    setChecklist({ id_verified: false, qualifications_verified: false, experience_linkedin_checked: false, rules_agreed: false });
+    setVerificationNotes('');
+    setApprovedSubjects(user.subjects || '');
+    setApprovedLevels(user.academic_level || '');
+  };
+
+  const handleVerify = async (user) => {
+    // Convert comma-separated string to array for subjects
+    const subjectsArray = approvedSubjects.split(',').map(s => s.trim()).filter(Boolean);
+    const levelsArray = approvedLevels.split(',').map(l => l.trim()).filter(Boolean);
+    
+    const verificationData = {
+      ...checklist,
+      internal_notes: verificationNotes
+    };
+
+    const { error } = await supabase.from('profiles').update({ 
+      is_verified: true,
+      verification_data: verificationData,
+      approved_subjects: subjectsArray,
+      approved_levels: levelsArray
+    }).eq('id', user.id);
+    
     if (!error) {
-      setUsers(users.map(u => u.id === userId ? { ...u, is_verified: true } : u));
-      sendEmail(userEmail, 'Your Account is Verified!', EmailTemplates.consultantVerified(userName));
+      setUsers(users.map(u => u.id === user.id ? { ...u, is_verified: true, verification_data: verificationData, approved_subjects: subjectsArray, approved_levels: levelsArray } : u));
+      sendEmail(user.email, 'Welcome to Gabriel Academics!', EmailTemplates.consultantVerified(user.display_name));
+      
+      // Also send a platform notification
+      await supabase.from('notifications').insert([{
+        user_id: user.id,
+        title: 'Welcome to Gabriel Academics!',
+        body: 'Your consultant application has been verified. Check your dashboard for details on your approved levels and subjects.',
+        type: 'alert',
+        link: '/consultant'
+      }]);
+      
+      setVerifyingUser(null);
     } else {
       alert('Error verifying user: ' + error.message);
     }
   };
-  
+
   const handleToggleSuspend = async (user) => {
     const newStatus = !user.is_verified;
     const { error } = await supabase.from('profiles').update({ is_verified: newStatus }).eq('id', user.id);
@@ -790,7 +837,7 @@ function UsersTab({ adminProfile, users, setUsers, role }) {
                 <td style={{padding: '12px 16px', textAlign: 'right'}}>
                   <div style={{display: 'flex', gap: '8px', justifyContent: 'flex-end'}}>
                     {!user.is_active ? null : !user.is_verified && role === 'consultant' && (
-                      <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); handleVerify(user.id, user.email, user.display_name); }}>Verify</button>
+                      <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); openVerifyModal(user); }}>Review & Verify</button>
                     )}
                     {user.is_active && (
                       <button className="btn btn-ghost btn-sm" onClick={(e) => { e.stopPropagation(); openEdit(user); }}>Edit</button>
@@ -839,6 +886,113 @@ function UsersTab({ adminProfile, users, setUsers, role }) {
             <div className="modal-foot">
               <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleCreateUser}>Create Account</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL */}
+      {showEditModal && (
+        <div className="modal-bg">
+          <div className="modal" style={{maxWidth: '400px'}}>
+            <div className="modal-head">
+              <div className="modal-title">Edit Account</div>
+              <button className="close-btn" onClick={() => setShowEditModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">Role</label>
+                <select className="form-input" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
+                  <option value="client">Client</option>
+                  <option value="consultant">Consultant</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input type="text" className="form-input" value={formData.display_name} onChange={e => setFormData({...formData, display_name: e.target.value})} />
+              </div>
+            </div>
+            <div className="modal-foot">
+              <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleEditUser}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VERIFY CONSULTANT MODAL */}
+      {verifyingUser && (
+        <div className="modal-bg" onClick={(e) => { if(e.target===e.currentTarget) setVerifyingUser(null); }}>
+          <div className="modal" style={{maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto'}}>
+            <div className="modal-head">
+              <div className="modal-title">Verify Consultant Application</div>
+              <button className="close-btn" onClick={() => setVerifyingUser(null)}>×</button>
+            </div>
+            
+            <div className="modal-body" style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+              
+              <div style={{background: 'rgba(59, 130, 246, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)'}}>
+                <div style={{fontSize: '14px', fontWeight: 600, color: 'var(--blue)', marginBottom: '8px'}}>Applicant Details</div>
+                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px'}}>
+                  <div><span style={{color: 'var(--muted)'}}>Name:</span> {verifyingUser.display_name}</div>
+                  <div><span style={{color: 'var(--muted)'}}>Email:</span> {verifyingUser.email}</div>
+                  <div><span style={{color: 'var(--muted)'}}>Phone:</span> {verifyingUser.phone || 'N/A'}</div>
+                  <div><span style={{color: 'var(--muted)'}}>Requested Levels:</span> {verifyingUser.academic_level || 'N/A'}</div>
+                  <div style={{gridColumn: '1 / -1'}}><span style={{color: 'var(--muted)'}}>Requested Subjects:</span> {verifyingUser.subjects || 'N/A'}</div>
+                  <div style={{gridColumn: '1 / -1'}}><span style={{color: 'var(--muted)'}}>Qualifications:</span> {verifyingUser.qualification || 'N/A'}</div>
+                  <div style={{gridColumn: '1 / -1'}}><span style={{color: 'var(--muted)'}}>LinkedIn:</span> {verifyingUser.linkedin_url ? <a href={verifyingUser.linkedin_url} target="_blank" rel="noreferrer" style={{color: 'var(--blue)'}}>{verifyingUser.linkedin_url}</a> : 'N/A'}</div>
+                  <div style={{gridColumn: '1 / -1'}}><span style={{color: 'var(--muted)'}}>Experience:</span> {verifyingUser.years_experience} years</div>
+                </div>
+              </div>
+
+              <div>
+                <div style={{fontSize: '14px', fontWeight: 600, marginBottom: '8px'}}>Counter-Offer / Approved Specializations</div>
+                <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '12px'}}>Adjust the levels and subjects if you want to restrict them to specific areas only. Comma-separated.</div>
+                <div className="form-group">
+                  <label className="form-label">Approved Levels</label>
+                  <input type="text" className="form-input" value={approvedLevels} onChange={e => setApprovedLevels(e.target.value)} placeholder="e.g. Undergraduate, Master's" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Approved Subjects</label>
+                  <input type="text" className="form-input" value={approvedSubjects} onChange={e => setApprovedSubjects(e.target.value)} placeholder="e.g. Mathematics, Economics" />
+                </div>
+              </div>
+
+              <div>
+                <div style={{fontSize: '14px', fontWeight: 600, marginBottom: '8px'}}>Verification Checklist</div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px'}}>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                    <input type="checkbox" checked={checklist.id_verified} onChange={e => setChecklist({...checklist, id_verified: e.target.checked})} />
+                    Identity & Contact Details Verified
+                  </label>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                    <input type="checkbox" checked={checklist.qualifications_verified} onChange={e => setChecklist({...checklist, qualifications_verified: e.target.checked})} />
+                    Academic Qualifications & Degrees Verified
+                  </label>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                    <input type="checkbox" checked={checklist.experience_linkedin_checked} onChange={e => setChecklist({...checklist, experience_linkedin_checked: e.target.checked})} />
+                    Professional Experience & LinkedIn Profile Checked
+                  </label>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                    <input type="checkbox" checked={checklist.rules_agreed} onChange={e => setChecklist({...checklist, rules_agreed: e.target.checked})} />
+                    Platform Rules & Plagiarism Policies Understood
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <div style={{fontSize: '14px', fontWeight: 600, marginBottom: '8px'}}>Internal Review Notes</div>
+                <textarea className="form-input" rows="3" placeholder="Add any internal notes about this verification... (Visible only to admins)" value={verificationNotes} onChange={e => setVerificationNotes(e.target.value)}></textarea>
+              </div>
+
+            </div>
+            
+            <div className="modal-foot">
+              <button className="btn btn-ghost" onClick={() => setVerifyingUser(null)}>Cancel</button>
+              <button className="btn btn-primary" style={{background: 'var(--green)'}} onClick={() => handleVerify(verifyingUser)} disabled={!checklist.id_verified || !checklist.qualifications_verified || !checklist.experience_linkedin_checked || !checklist.rules_agreed}>
+                Approve & Verify Consultant
+              </button>
             </div>
           </div>
         </div>
