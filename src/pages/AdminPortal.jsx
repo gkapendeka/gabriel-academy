@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, logMilestone } from '../lib/supabase';
+import { MilestoneTracker } from '../components/MilestoneTracker';
 import { useProfile } from '../lib/useProfile';
 import { useJobs } from '../lib/useJobs';
 import { useMessages } from '../lib/useMessages';
@@ -162,6 +163,8 @@ function AdminJobDetail({ job, profile, onBack, onPost, onPassQA, onFailQA, onUp
           <button className="btn btn-ghost" onClick={onBack}>← Back to Pipeline</button>
           <div className="page-title" style={{margin: 0}}>Admin Review: {job.job_ref}</div>
         </div>
+        
+        <MilestoneTracker job={job} />
         
         <div style={{display: 'flex', gap: '24px', alignItems: 'flex-start'}}>
           
@@ -1656,6 +1659,7 @@ export default function AdminPortal() {
       
       if (error) throw error;
       toast.success("Job posted to the Mission Board!");
+      logMilestone(job.id, 'posted');
       setSelectedJob(null);
       setActiveTab('pipeline');
     } catch (err) {
@@ -1692,6 +1696,8 @@ export default function AdminPortal() {
         .eq('id', job.id);
       
       if (error) throw error;
+      toast.success("Work delivered to client!");
+      logMilestone(job.id, 'delivered');
       setSelectedJob(null);
       setActiveTab('pipeline');
 
@@ -1718,6 +1724,8 @@ export default function AdminPortal() {
         .eq('id', job.id);
       
       if (error) throw error;
+      toast.success('Feedback sent to consultant! Job moved to Revisions.');
+      logMilestone(job.id, 'qa_failed');
       setSelectedJob(null);
       setActiveTab('pipeline');
 
@@ -2109,6 +2117,7 @@ export default function AdminPortal() {
                     is_internal: true
                   });
                   toast.success(`Status updated to ${newStatus}`);
+                  logMilestone(jobId, newStatus);
                   setSelectedJob(null);
                   setActiveTab('pipeline');
                 }

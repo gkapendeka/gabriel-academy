@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { SA_UNIVERSITIES, SA_FACULTIES } from '../lib/sa_universities';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, logMilestone } from '../lib/supabase';
+import { MilestoneTracker } from '../components/MilestoneTracker';
 import { useProfile } from '../lib/useProfile';
 import { useJobs } from '../lib/useJobs';
 import { useMessages } from '../lib/useMessages';
@@ -294,141 +296,23 @@ function JobModal({ job, profile, onClose }) {
               <div className="card-box-title" style={{fontSize: '14px', marginBottom: '16px'}}>Order Progress</div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative'}}>
-                {/* Order Progress Events */}
-                {(() => {
-                  const events = [];
-                  
-                  // 1. Creation
-                  events.push({
-                    date: new Date(job.created_at),
-                    title: 'Request Created',
-                    summary: 'You submitted the academic request.',
-                    icon: '✓',
-                    color: 'var(--green)'
-                  });
-
-                  // 2. Payments
-                  payments.forEach(p => {
-                    if (['cleared', 'completed', 'paid', 'approved'].includes(p.status?.toLowerCase())) {
-                      events.push({
-                        date: new Date(p.created_at || p.paid_at || Date.now()),
-                        title: 'Payment Secured',
-                        summary: `Funds (R${p.amount}) allocated for this order.`,
-                        icon: '✓',
-                        color: 'var(--green)'
-                      });
-                    }
-                  });
-
-                  // 3. Internal Messages (Status / Budget)
-                  messages.forEach(m => {
-                    if (m.is_internal) {
-                      if (m.body && m.body.includes('Budget changed to')) {
-                        events.push({
-                          date: new Date(m.created_at),
-                          title: 'Budget Adjusted',
-                          summary: 'Budget changed to R' + m.body.split('to R')[1],
-                          icon: '✎',
-                          color: 'var(--blue)'
-                        });
-                      } else if (m.body && m.body.startsWith('STATUS_UPDATE:')) {
-                        const newStatus = m.body.split(':')[1];
-                        let icon = 'ℹ';
-                        let color = 'var(--gold)';
-                        let title = 'Order Progress';
-                        let summary = `Status changed to: ${statusLabel(newStatus)}.`;
-                        
-                        if (['posted', 'pending'].includes(newStatus)) {
-                          icon = '●'; color = 'var(--blue)'; title = 'Sourcing Consultant'; summary = 'Gabriel Academics is finding the best consultant for your assignment...';
-                        } else if (newStatus === 'active') {
-                          icon = '●'; color = 'var(--blue)'; title = 'Consultant Assigned'; summary = 'An expert consultant is actively working on your request.';
-                        } else if (['submitted', 'qa_review'].includes(newStatus)) {
-                          icon = '●'; color = 'var(--blue)'; title = 'QA Review & Follow-up'; summary = 'The consultant submitted the work. Our Academic Team is currently reviewing it for quality.';
-                        } else if (newStatus === 'qa_failed') {
-                          icon = '●'; color = 'var(--red)'; title = 'Revisions Requested'; summary = 'Our QA team requested revisions from the consultant to ensure top quality.';
-                        } else if (['delivered', 'completed'].includes(newStatus)) {
-                          icon = '✓'; color = 'var(--green)'; title = 'Order Delivered'; summary = 'Work passed quality assurance checks and is ready to download!';
-                        }
-                        
-                        events.push({
-                          date: new Date(m.created_at),
-                          title,
-                          summary,
-                          icon,
-                          color
-                        });
-                      }
-                    }
-                  });
-
-                  // Sort chronologically
-                  events.sort((a, b) => a.date - b.date);
-
-                  // Calculate unfulfilled standard pipeline steps
-                  const upcoming = [];
-                  const s = job.status;
-                  const statusWeight = {
-                    'new': 0, 'pending': 1, 'paid': 1, 'posted': 1,
-                    'active': 2, 'submitted': 3, 'qa_review': 3, 'qa_failed': 3,
-                    'delivered': 4, 'completed': 4,
-                    'cancelled': 99, 'disputed': 99
-                  };
-                  
-                  const currWeight = statusWeight[s] || 0;
-                  
-                  if (currWeight < 1) upcoming.push({ title: 'Sourcing Consultant', summary: 'Gabriel Academics will match you with the best consultant.' });
-                  if (currWeight < 2) upcoming.push({ title: 'Consultant Assigned', summary: 'An expert consultant will actively work on your request.' });
-                  if (currWeight < 3) upcoming.push({ title: 'QA Review & Follow-up', summary: 'Our Academic Team will review the submitted work for quality.' });
-                  if (currWeight < 4) upcoming.push({ title: 'Order Delivered', summary: 'Your final work will be ready to download!' });
-
-
-                  return (
-                    <>
-                      {events.map((event, idx) => {
-                        const isLastEvent = idx === events.length - 1 && upcoming.length === 0;
-                        return (
-                          <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLastEvent ? '0' : '16px'}}>
-                            {!isLastEvent && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
-                            <div style={{width: '24px', height: '24px', borderRadius: '50%', background: event.color === 'var(--card)' ? 'var(--card)' : event.color, border: event.color === 'var(--card)' ? '2px solid var(--gold)' : 'none', color: event.color === 'var(--card)' ? 'var(--gold)' : (event.color === 'var(--blue)' ? '#fff' : '#000'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                              {event.icon}
-                            </div>
-                            <div style={{flex: 1}}>
-                              <div style={{fontWeight: 600, fontSize: '13px', color: event.color === 'var(--green)' ? 'var(--green)' : (event.color === 'var(--blue)' ? 'var(--blue)' : 'var(--text)')}}>
-                                {event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date.toLocaleString()})</span>
-                              </div>
-                              <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {upcoming.map((u, idx) => {
-                        const isLastUpcoming = idx === upcoming.length - 1;
-                        return (
-                          <div key={'up'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLastUpcoming ? '0' : '16px', opacity: 0.5}}>
-                            {!isLastUpcoming && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
-                            <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', border: '2px solid var(--muted)', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                              ○
-                            </div>
-                            <div style={{flex: 1}}>
-                              <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--muted)'}}>
-                                {u.title} <span style={{fontSize: '11px', fontWeight: 400}}>(Pending)</span>
-                              </div>
-                              <div style={{fontSize: '12px', color: 'var(--muted)'}}>{u.summary}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </>
-                  );
-                })()}
+                <MilestoneTracker job={localJob} />
               </div>
             </div>
 
-            {job.status === 'delivered' && job.submission_url && (
+            {['delivered', 'completed'].includes(job.status) && job.submission_url && (
               <div className="card-box" style={{borderColor: 'var(--green)', background: 'rgba(16,185,129,0.05)'}}>
-                <div className="card-box-title" style={{color: 'var(--green)'}}>Work Delivered!</div>
+                <div className="card-box-title" style={{color: 'var(--green)'}}>{job.status === 'completed' ? 'Job Completed & Accepted' : 'Work Delivered!'}</div>
                 <div style={{fontSize: '13px', marginBottom: '12px'}}>Your academic request has been completed and passed our QA checks.</div>
                 <button onClick={handleDownloadWork} className="btn btn-primary" style={{background: 'var(--green)', marginBottom: '16px'}}>{icon('download')} Download Final Work</button>
+                {job.status === 'delivered' && (
+                  <button onClick={async () => {
+                    await supabase.from('jobs').update({ status: 'completed' }).eq('id', job.id);
+                    logMilestone(job.id, 'completed');
+                    setLocalJob({ ...localJob, status: 'completed' });
+                    toast.success('Job marked as completed!');
+                  }} className="btn btn-gold" style={{marginLeft: '12px', marginBottom: '16px'}}>Accept Work</button>
+                )}
                 
                 {!reviewSubmitted && (
                   <div style={{borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '16px'}}>

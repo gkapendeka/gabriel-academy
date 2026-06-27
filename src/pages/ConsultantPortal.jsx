@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabase, logMilestone } from '../lib/supabase';
+import { MilestoneTracker } from '../components/MilestoneTracker';
 import { useProfile } from '../lib/useProfile';
 import { useJobs } from '../lib/useJobs';
 import { useMessages } from '../lib/useMessages';
@@ -89,6 +90,8 @@ function JobModal({ job, profile, onClose, onAccept, onSubmitWork, onRequestScop
                 </div>
               </div>
             </div>
+            
+            <MilestoneTracker job={job} />
             
             <div style={{marginBottom: '20px'}}>
               <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '6px'}}>Client Instructions</div>
@@ -480,6 +483,7 @@ export default function ConsultantPortal() {
       });
 
       toast.success("Job accepted!");
+      logMilestone(job.id, 'active');
       setSelectedJob(null);
     } catch (err) {
       toast.error('Error accepting job: ' + err.message);
@@ -494,7 +498,8 @@ export default function ConsultantPortal() {
         .eq('id', job.id);
       
       if (error) throw error;
-      toast.success("Job assignment cancelled.");
+      toast.success("You have successfully opted out of this job.");
+      logMilestone(job.id, 'paid');
       setSelectedJob(null);
     } catch (err) {
       toast.error('Error cancelling job: ' + err.message);
@@ -512,6 +517,7 @@ export default function ConsultantPortal() {
       
       if (error) throw error;
       toast.success("Job request sent to Admin for scope approval.");
+      logMilestone(job.id, 'pending');
       setSelectedJob(null);
     } catch (err) {
       toast.error('Error requesting job: ' + err.message);
@@ -543,6 +549,7 @@ export default function ConsultantPortal() {
       
       if (error) throw error;
       toast.success("Work submitted successfully for QA!");
+      logMilestone(job.id, 'submitted');
       setSelectedJob(null);
 
       // Send email to admin
@@ -594,9 +601,13 @@ export default function ConsultantPortal() {
     );
   }
 
-  const availableJobs = jobs.filter(j => j.status === 'posted');
-  const myActiveJobs = jobs.filter(j => j.status === 'pending' || j.status === 'active' || j.status === 'qa_failed' || j.status === 'submitted');
-  const historyJobs = jobs.filter(j => j.status === 'delivered' || j.status === 'completed');
+  const availableJobs = jobs.filter(j => j.status === 'posted' && j.consultant_id !== profile?.id);
+  const myActiveJobs = jobs.filter(j => 
+    j.consultant_id === profile?.id && !['delivered', 'completed', 'cancelled', 'disputed'].includes(j.status)
+  );
+  const historyJobs = jobs.filter(j => 
+    j.consultant_id === profile?.id && ['delivered', 'completed', 'cancelled', 'disputed'].includes(j.status)
+  );
 
   return (
     <div id="app-shell">
