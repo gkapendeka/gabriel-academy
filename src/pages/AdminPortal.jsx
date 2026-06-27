@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, logMilestone } from '../lib/supabase';
 import { MilestoneTracker } from '../components/MilestoneTracker';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useProfile } from '../lib/useProfile';
 import { useJobs } from '../lib/useJobs';
 import { useMessages } from '../lib/useMessages';
@@ -1744,15 +1745,16 @@ export default function AdminPortal() {
 
   const getCol = (statuses) => jobs.filter(j => 
     statuses.includes(j.status) &&
-    ((j.title || '').toLowerCase().includes((searchQuery || '').toLowerCase()) || 
-     (j.job_ref || '').toLowerCase().includes((searchQuery || '').toLowerCase()))
+    ((j.title || '').toString().toLowerCase().includes((searchQuery || '').toLowerCase()) || 
+     (j.job_ref || '').toString().toLowerCase().includes((searchQuery || '').toLowerCase()))
   );
 
   // Finances
   const totalGabrielMargin = jobs.filter(j => j.status === 'delivered').reduce((sum, j) => sum + Number(j.gabriel_margin || 0), 0);
 
   return (
-    <div id="app-shell">
+    <ErrorBoundary>
+      <div id="app-shell">
       <div className="topbar">
         <div className="brand" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
           <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)} style={{background:'none',border:'none',color:'var(--text)',alignItems:'center',cursor:'pointer',padding:0}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -2290,5 +2292,6 @@ export default function AdminPortal() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }

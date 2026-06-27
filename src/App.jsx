@@ -10,6 +10,7 @@ import UpdatePassword from './pages/UpdatePassword';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         }
       }} />
       <Router>
+        <ErrorBoundary>
         <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
@@ -48,6 +50,7 @@ function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </Router>
     </>
   );
