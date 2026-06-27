@@ -451,6 +451,39 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
     setLoading(false);
   };
 
+  const handleApproveScopeRequest = async () => {
+    if (!user.scope_requests) return;
+    try {
+      const newLevelsSet = new Set(user.approved_levels || []);
+      if (user.scope_requests.levels) {
+        newLevelsSet.add(user.scope_requests.levels);
+      }
+      
+      const newSubjectsSet = new Set(user.approved_subjects || []);
+      if (user.scope_requests.subjects) {
+        user.scope_requests.subjects.split(',').map(s => s.trim()).forEach(s => {
+          if (s) newSubjectsSet.add(s);
+        });
+      }
+
+      const newLevels = Array.from(newLevelsSet);
+      const newSubjects = Array.from(newSubjectsSet);
+
+      const { error } = await supabase.from('profiles').update({
+        approved_levels: newLevels,
+        approved_subjects: newSubjects,
+        scope_requests: null
+      }).eq('id', user.id);
+
+      if (error) throw error;
+      
+      onUpdate({ ...user, approved_levels: newLevels, approved_subjects: newSubjects, scope_requests: null });
+      alert('Scope request approved successfully!');
+    } catch (err) {
+      alert('Error approving scope: ' + err.message);
+    }
+  };
+
   const handleActionSubmit = async () => {
     if (!actionReason) return alert('Please select a reason.');
     
@@ -542,6 +575,65 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
               </div>
             )}
           </div>
+
+          {user.role === 'consultant' && (
+            <div style={{display: 'flex', gap: '24px', marginBottom: '24px'}}>
+              <div className="card-box" style={{flex: 1}}>
+                <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', color: 'var(--blue)'}}>Academic Scope</div>
+                <div style={{display: 'flex', gap: '24px'}}>
+                  <div style={{flex: 1}}>
+                    <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '8px', textTransform: 'uppercase'}}>Approved Levels</div>
+                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                      {user.approved_levels && user.approved_levels.length > 0 ? user.approved_levels.map(l => (
+                        <span key={l} className="badge badge-delivered">{l}</span>
+                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>None</span>}
+                    </div>
+                  </div>
+                  <div style={{flex: 1}}>
+                    <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '8px', textTransform: 'uppercase'}}>Approved Subjects</div>
+                    <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                      {user.approved_subjects && user.approved_subjects.length > 0 ? user.approved_subjects.map(s => (
+                        <span key={s} className="badge badge-active" style={{background: 'var(--blue)', color: 'white'}}>{s}</span>
+                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>None</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {user.scope_requests && (
+                  <div style={{marginTop: '24px', padding: '16px', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--gold)', borderRadius: '8px'}}>
+                    <div style={{fontWeight: 600, fontSize: '14px', color: 'var(--gold)', marginBottom: '12px'}}>Pending Scope Request</div>
+                    <div style={{fontSize: '13px', marginBottom: '8px'}}><strong>Levels Requested:</strong> {user.scope_requests.levels}</div>
+                    <div style={{fontSize: '13px', marginBottom: '16px'}}><strong>Subjects Requested:</strong> {user.scope_requests.subjects}</div>
+                    <button className="btn btn-sm" style={{background: 'var(--gold)', color: 'black'}} onClick={handleApproveScopeRequest}>Approve & Merge</button>
+                  </div>
+                )}
+              </div>
+
+              <div className="card-box" style={{width: '350px'}}>
+                <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px'}}>Private Details</div>
+                
+                <div style={{marginBottom: '16px'}}>
+                  <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '4px', textTransform: 'uppercase'}}>Bank Details</div>
+                  {user.bank_details ? (
+                    <div style={{fontSize: '13px', lineHeight: '1.6'}}>
+                      <div><strong>Bank:</strong> {user.bank_details.bank_name}</div>
+                      <div><strong>Account:</strong> {user.bank_details.account_number} ({user.bank_details.account_type})</div>
+                      <div><strong>Branch Code:</strong> {user.bank_details.branch_code}</div>
+                    </div>
+                  ) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>Not provided</div>}
+                </div>
+
+                <div>
+                  <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '4px', textTransform: 'uppercase'}}>Qualifications</div>
+                  {user.qualifications_url ? (
+                    <a href={supabase.storage.from('credentials').getPublicUrl(user.qualifications_url).data.publicUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-ghost" style={{display: 'inline-block', color: 'var(--blue)'}}>
+                      View Credential Document →
+                    </a>
+                  ) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>No document uploaded</div>}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div style={{display: 'flex', gap: '24px'}}>
             {/* JOB HISTORY */}
@@ -1158,7 +1250,7 @@ export default function AdminPortal() {
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(true);
 
-  const [settings, setSettings] = useState({ default_deadline_buffer_hours: 24, max_cancellation_window_hours: 12 });
+  const [settings, setSettings] = useState({ default_deadline_buffer_hours: 24, max_cancellation_window_hours: 12, academic_taxonomy: [] });
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -1232,11 +1324,47 @@ export default function AdminPortal() {
     navigate('/');
   };
 
+  const handleAddTaxonomyLevel = () => {
+    const newTax = [...(settings.academic_taxonomy || []), { level: 'New Level', subjects: [] }];
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
+  const handleUpdateTaxonomyLevelName = (idx, name) => {
+    const newTax = [...(settings.academic_taxonomy || [])];
+    newTax[idx].level = name;
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
+  const handleRemoveTaxonomyLevel = (idx) => {
+    const newTax = [...(settings.academic_taxonomy || [])];
+    newTax.splice(idx, 1);
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
+  const handleAddTaxonomySubject = (idx) => {
+    const newTax = [...(settings.academic_taxonomy || [])];
+    newTax[idx].subjects.push('New Subject');
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
+  const handleUpdateTaxonomySubject = (idx, sIdx, val) => {
+    const newTax = [...(settings.academic_taxonomy || [])];
+    newTax[idx].subjects[sIdx] = val;
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
+  const handleRemoveTaxonomySubject = (idx, sIdx) => {
+    const newTax = [...(settings.academic_taxonomy || [])];
+    newTax[idx].subjects.splice(sIdx, 1);
+    setSettings({...settings, academic_taxonomy: newTax});
+  };
+
   const handleSaveSettings = async () => {
     try {
       const updates = [
         { setting_key: 'default_deadline_buffer_hours', setting_value: settings.default_deadline_buffer_hours },
-        { setting_key: 'max_cancellation_window_hours', setting_value: settings.max_cancellation_window_hours }
+        { setting_key: 'max_cancellation_window_hours', setting_value: settings.max_cancellation_window_hours },
+        { setting_key: 'academic_taxonomy', setting_value: settings.academic_taxonomy }
       ];
       const { error } = await supabase.from('system_settings').upsert(updates, { onConflict: 'setting_key' });
       if (error) throw error;
@@ -1587,8 +1715,37 @@ export default function AdminPortal() {
                   <div className="form-note">Consultants cannot abandon a job if the deadline is within this many hours.</div>
                 </div>
 
-                <div style={{marginTop: '24px'}}>
+                <div style={{marginTop: '24px', paddingBottom: '24px', borderBottom: '1px solid var(--border)'}}>
                   <button className="btn btn-primary" onClick={handleSaveSettings}>Save Configuration</button>
+                </div>
+
+                <div style={{fontWeight: 600, fontSize: '16px', marginBottom: '16px', marginTop: '24px'}}>Academic Taxonomy (Levels & Subjects)</div>
+                <div className="form-note" style={{marginBottom: '16px'}}>Manage the dropdown choices consultants see when applying for subjects.</div>
+                
+                {(settings.academic_taxonomy || []).map((tax, idx) => (
+                  <div key={idx} style={{marginBottom: '20px', padding: '16px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px'}}>
+                    <div style={{display: 'flex', gap: '8px', marginBottom: '12px'}}>
+                      <input className="form-input" style={{flex: 1, fontWeight: 600}} value={tax.level} onChange={e => handleUpdateTaxonomyLevelName(idx, e.target.value)} placeholder="Level Name (e.g. Primary School)" />
+                      <button className="btn btn-sm" style={{background: 'var(--red)', color: 'white'}} onClick={() => handleRemoveTaxonomyLevel(idx)}>Remove Level</button>
+                    </div>
+                    
+                    <div style={{paddingLeft: '16px', borderLeft: '2px solid var(--border)'}}>
+                      <div style={{fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--muted)'}}>Subjects under this Level</div>
+                      {tax.subjects.map((sub, sIdx) => (
+                        <div key={sIdx} style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+                          <input className="form-input" style={{flex: 1}} value={sub} onChange={e => handleUpdateTaxonomySubject(idx, sIdx, e.target.value)} placeholder="Subject Name" />
+                          <button className="btn btn-sm" style={{color: 'var(--red)', background: 'transparent', border: '1px solid var(--border)'}} onClick={() => handleRemoveTaxonomySubject(idx, sIdx)}>X</button>
+                        </div>
+                      ))}
+                      <button className="btn btn-sm" style={{background: 'transparent', border: '1px dashed var(--gold)', color: 'var(--gold)', marginTop: '8px'}} onClick={() => handleAddTaxonomySubject(idx)}>+ Add Subject</button>
+                    </div>
+                  </div>
+                ))}
+                
+                <button className="btn btn-sm" style={{background: 'var(--blue)', color: 'white'}} onClick={handleAddTaxonomyLevel}>+ Add New Academic Level</button>
+                
+                <div style={{marginTop: '24px'}}>
+                  <button className="btn btn-primary" onClick={handleSaveSettings}>Save Taxonomy Changes</button>
                 </div>
               </div>
             </div>

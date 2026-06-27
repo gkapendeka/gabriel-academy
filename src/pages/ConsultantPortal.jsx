@@ -281,7 +281,8 @@ export default function ConsultantPortal() {
   const [activeTab, setActiveTab] = useState('board');
   const [profileForm, setProfileForm] = useState({ phone: '', display_name: '', linkedin_url: '' });
   const [bankForm, setBankForm] = useState({ bank_name: '', account_number: '', branch_code: '', account_type: 'Checking' });
-  const [requestScope, setRequestScope] = useState({ subjects: '', levels: '' });
+  const [requestScopeLevel, setRequestScopeLevel] = useState('');
+  const [requestScopeSubjects, setRequestScopeSubjects] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [settings, setSettings] = useState({});
 
@@ -340,18 +341,14 @@ export default function ConsultantPortal() {
   };
 
   const handleSendScopeRequest = async () => {
-    if (!requestScope.subjects && !requestScope.levels) return;
+    if (!requestScopeLevel || requestScopeSubjects.length === 0) return toast.error('Please select a level and at least one subject.');
     try {
-      const reqData = {
-        subjects: requestScope.subjects,
-        levels: requestScope.levels,
+      const payload = {
+        levels: requestScopeLevel,
+        subjects: requestScopeSubjects.join(', '),
         requested_at: new Date().toISOString()
       };
-      
-      const { error } = await supabase.from('profiles').update({
-        scope_requests: reqData
-      }).eq('id', profile.id);
-      
+      const { error } = await supabase.from('profiles').update({ scope_requests: payload }).eq('id', profile.id);
       if (error) throw error;
       
       // Notify Admin
@@ -362,7 +359,9 @@ export default function ConsultantPortal() {
       });
       
       toast.success('Request sent to Admin!');
-      setRequestScope({ subjects: '', levels: '' });
+      setRequestScopeLevel('');
+      setRequestScopeSubjects([]);
+      profile.scope_requests = payload;
     } catch (err) {
       toast.error('Error sending request: ' + err.message);
     }
@@ -784,14 +783,44 @@ export default function ConsultantPortal() {
                       )}
                       
                       <div className="form-group">
-                        <label className="form-label">Additional Subjects</label>
-                        <input className="form-input" placeholder="e.g. Advanced Calculus, Physics" value={requestScope.subjects} onChange={e => setRequestScope({...requestScope, subjects: e.target.value})} />
+                        <label className="form-label">Select Academic Level</label>
+                        <select className="form-input" value={requestScopeLevel} onChange={e => { setRequestScopeLevel(e.target.value); setRequestScopeSubjects([]); }}>
+                          <option value="">-- Choose Level --</option>
+                          {(settings.academic_taxonomy || []).map(tax => (
+                            <option key={tax.level} value={tax.level}>{tax.level}</option>
+                          ))}
+                        </select>
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">Additional Levels</label>
-                        <input className="form-input" placeholder="e.g. Masters, PhD" value={requestScope.levels} onChange={e => setRequestScope({...requestScope, levels: e.target.value})} />
-                      </div>
-                      <button className="btn btn-sm" style={{background: 'transparent', border: '1px solid var(--gold)', color: 'var(--gold)'}} onClick={handleSendScopeRequest}>Submit Request</button>
+                      
+                      {requestScopeLevel && (
+                        <div className="form-group">
+                          <label className="form-label">Select Subjects</label>
+                          <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px', background: 'var(--bg)', borderRadius: '6px', border: '1px solid var(--border)'}}>
+                            {((settings.academic_taxonomy || []).find(t => t.level === requestScopeLevel)?.subjects || []).map(sub => {
+                              const isSelected = requestScopeSubjects.includes(sub);
+                              return (
+                                <button 
+                                  key={sub}
+                                  className="btn btn-sm"
+                                  style={{
+                                    background: isSelected ? 'var(--blue)' : 'transparent',
+                                    color: isSelected ? 'white' : 'var(--muted)',
+                                    border: '1px solid ' + (isSelected ? 'var(--blue)' : 'var(--border)')
+                                  }}
+                                  onClick={() => {
+                                    if (isSelected) setRequestScopeSubjects(requestScopeSubjects.filter(s => s !== sub));
+                                    else setRequestScopeSubjects([...requestScopeSubjects, sub]);
+                                  }}
+                                >
+                                  {sub}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <button className="btn btn-sm" style={{background: 'transparent', border: '1px solid var(--gold)', color: 'var(--gold)'}} onClick={handleSendScopeRequest} disabled={!requestScopeLevel || requestScopeSubjects.length === 0}>Submit Request</button>
                     </div>
                   </div>
 
