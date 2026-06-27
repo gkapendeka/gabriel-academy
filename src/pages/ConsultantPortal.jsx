@@ -154,6 +154,63 @@ function JobModal({ job, profile, onClose, onAccept, onSubmitWork, onRequestScop
                 </div>
               </div>
             )}
+
+            {['submitted', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
+              <div style={{marginTop: '20px', padding: '16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)'}}>
+                <div style={{fontWeight: 600, marginBottom: '16px', color: 'var(--blue)'}}>Job Timeline</div>
+                
+                <div style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+                  <div style={{display: 'flex', gap: '12px'}}>
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                      <div style={{width: '10px', height: '10px', borderRadius: '50%', background: 'var(--blue)', zIndex: 2}}></div>
+                      <div style={{width: '2px', flex: 1, background: 'var(--border)', minHeight: '30px', marginTop: '4px'}}></div>
+                    </div>
+                    <div style={{marginTop: '-3px'}}>
+                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>{new Date(job.created_at).toLocaleString()}</div>
+                      <div style={{fontSize: '13px', fontWeight: 500}}>Job Posted</div>
+                    </div>
+                  </div>
+                  
+                  {job.submitted_at && (
+                    <div style={{display: 'flex', gap: '12px'}}>
+                      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        <div style={{width: '10px', height: '10px', borderRadius: '50%', background: 'var(--gold)', zIndex: 2}}></div>
+                        {(job.status === 'delivered' || job.status === 'completed') && (
+                          <div style={{width: '2px', flex: 1, background: 'var(--border)', minHeight: '30px', marginTop: '4px'}}></div>
+                        )}
+                      </div>
+                      <div style={{marginTop: '-3px'}}>
+                        <div style={{fontSize: '12px', color: 'var(--muted)'}}>{new Date(job.submitted_at).toLocaleString()}</div>
+                        <div style={{fontSize: '13px', fontWeight: 500}}>Work Submitted for QA</div>
+                        {job.qa_notes && <div style={{fontSize: '12px', color: 'var(--muted)', marginTop: '4px'}}>Notes: {job.qa_notes}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {job.status === 'delivered' && (
+                    <div style={{display: 'flex', gap: '12px'}}>
+                      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        <div style={{width: '10px', height: '10px', borderRadius: '50%', background: 'var(--green)', zIndex: 2}}></div>
+                      </div>
+                      <div style={{marginTop: '-3px'}}>
+                        <div style={{fontSize: '13px', fontWeight: 500, color: 'var(--green)'}}>QA Passed - Delivered to Client</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {job.status === 'completed' && (
+                    <div style={{display: 'flex', gap: '12px'}}>
+                      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                        <div style={{width: '10px', height: '10px', borderRadius: '50%', background: 'var(--green)', zIndex: 2}}></div>
+                      </div>
+                      <div style={{marginTop: '-3px'}}>
+                        <div style={{fontSize: '13px', fontWeight: 500, color: 'var(--green)'}}>Job Completed & Payout Approved</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
             {job.status === 'posted' && profile.is_verified && (
               <div style={{marginTop: '20px', padding: '16px', border: '1px solid var(--border)', borderRadius: '8px', background: 'var(--card)'}}>
