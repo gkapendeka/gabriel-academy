@@ -584,17 +584,17 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
                   <div style={{flex: 1}}>
                     <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '8px', textTransform: 'uppercase'}}>Approved Levels</div>
                     <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                      {user.approved_levels && user.approved_levels.length > 0 ? user.approved_levels.map(l => (
+                      {Array.isArray(user.approved_levels) && user.approved_levels.length > 0 ? user.approved_levels.map(l => (
                         <span key={l} className="badge badge-delivered">{l}</span>
-                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>None</span>}
+                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>{typeof user.approved_levels === 'string' ? user.approved_levels : 'None'}</span>}
                     </div>
                   </div>
                   <div style={{flex: 1}}>
                     <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '8px', textTransform: 'uppercase'}}>Approved Subjects</div>
                     <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                      {user.approved_subjects && user.approved_subjects.length > 0 ? user.approved_subjects.map(s => (
+                      {Array.isArray(user.approved_subjects) && user.approved_subjects.length > 0 ? user.approved_subjects.map(s => (
                         <span key={s} className="badge badge-active" style={{background: 'var(--blue)', color: 'white'}}>{s}</span>
-                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>None</span>}
+                      )) : <span style={{fontSize: '13px', color: 'var(--muted)'}}>{typeof user.approved_subjects === 'string' ? user.approved_subjects : 'None'}</span>}
                     </div>
                   </div>
                 </div>
@@ -1278,7 +1278,9 @@ export default function AdminPortal() {
 
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(profile?.id);
   const [clientsList, setClientsList] = useState([]);
-  const [newJobData, setNewJobData] = useState({ client_id: '', manual_client_name: '', title: '', subject: '', academic_level: 'Undergraduate', description: '', budget: '', deadline: '' });
+  const [newJobData, setNewJobData] = useState({ client_id: '', manual_client_name: '', client_reference: '', title: '', subject: '', academic_level: 'Undergraduate', pages: '', reference_style: 'Harvard', description: '', budget: '', deadline: '' });
+  const [manualJobFile, setManualJobFile] = useState(null);
+  const [manualJobUploading, setManualJobUploading] = useState(false);
 
   const fetchClientsForManualJob = async () => {
     const { data } = await supabase.from('profiles').select('id, display_name, email').eq('role', 'client').order('created_at', { ascending: false });
@@ -1293,8 +1295,23 @@ export default function AdminPortal() {
       return toast.error('Please enter the manual client name.');
     }
     try {
+      setManualJobUploading(true);
+      let uploadedUrl = null;
+      if (manualJobFile) {
+        const fileExt = manualJobFile.name.split('.').pop();
+        const fileName = `manual-jobs/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { error: uploadError, data } = await supabase.storage.from('job-attachments').upload(fileName, manualJobFile);
+        if (uploadError) throw uploadError;
+        uploadedUrl = data.path;
+      }
+
       const { data: jobRefData, error: rpcError } = await supabase.rpc('generate_job_ref');
       let jobRef = jobRefData || `GA-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      let fullInstructions = newJobData.description;
+      if (newJobData.client_reference) {
+        fullInstructions = `**Client Reference:** ${newJobData.client_reference}\n\n${fullInstructions}`;
+      }
 
       const { error } = await supabase.from('jobs').insert({
         client_id: newJobData.client_id === 'manual' ? null : newJobData.client_id,
@@ -1303,7 +1320,10 @@ export default function AdminPortal() {
         title: newJobData.title,
         subject: newJobData.subject,
         level: newJobData.academic_level,
-        instructions: newJobData.description,
+        pages: parseInt(newJobData.pages) || 0,
+        reference_style: newJobData.reference_style,
+        attachment_url: uploadedUrl,
+        instructions: fullInstructions,
         client_budget: parseFloat(newJobData.budget),
         deadline: new Date(newJobData.deadline).toISOString(),
         status: 'paid' // Automatically bypass payment for manual admin jobs
@@ -1311,11 +1331,14 @@ export default function AdminPortal() {
 
       if (error) throw error;
       setShowCreateJobModal(false);
-      setNewJobData({ client_id: '', manual_client_name: '', title: '', subject: '', academic_level: 'Undergraduate', description: '', budget: '', deadline: '' });
+      setNewJobData({ client_id: '', manual_client_name: '', client_reference: '', title: '', subject: '', academic_level: 'Undergraduate', pages: '', reference_style: 'Harvard', description: '', budget: '', deadline: '' });
+      setManualJobFile(null);
       // Force a reload of jobs (usually handled by real-time or we can just alert)
       toast.success('Job created successfully! It may take a moment to appear.');
     } catch (err) {
       toast.error('Error creating job: ' + err.message);
+    } finally {
+      setManualJobUploading(false);
     }
   };
 
@@ -1857,9 +1880,15 @@ export default function AdminPortal() {
                 </select>
               </div>
               {newJobData.client_id === 'manual' && (
-                <div className="form-group">
-                  <label className="form-label">Manual Client Name</label>
-                  <input type="text" className="form-input" placeholder="e.g. John Doe (Offline)" value={newJobData.manual_client_name} onChange={e => setNewJobData({...newJobData, manual_client_name: e.target.value})} />
+                <div style={{display: 'flex', gap: '16px'}}>
+                  <div className="form-group" style={{flex: 1}}>
+                    <label className="form-label">Manual Client Name</label>
+                    <input type="text" className="form-input" placeholder="e.g. John Doe (Offline)" value={newJobData.manual_client_name} onChange={e => setNewJobData({...newJobData, manual_client_name: e.target.value})} />
+                  </div>
+                  <div className="form-group" style={{flex: 1}}>
+                    <label className="form-label">Client Reference (Optional)</label>
+                    <input type="text" className="form-input" placeholder="e.g. REF-1234" value={newJobData.client_reference} onChange={e => setNewJobData({...newJobData, client_reference: e.target.value})} />
+                  </div>
                 </div>
               )}
               
@@ -1896,14 +1925,40 @@ export default function AdminPortal() {
                 </div>
               </div>
 
+              <div style={{display: 'flex', gap: '16px'}}>
+                <div className="form-group" style={{flex: 1}}>
+                  <label className="form-label">Word Count / Pages</label>
+                  <input type="number" className="form-input" placeholder="e.g. 5" value={newJobData.pages} onChange={e => setNewJobData({...newJobData, pages: e.target.value})} />
+                </div>
+                <div className="form-group" style={{flex: 1}}>
+                  <label className="form-label">Referencing Style</label>
+                  <select className="form-input" value={newJobData.reference_style} onChange={e => setNewJobData({...newJobData, reference_style: e.target.value})}>
+                    <option value="Harvard">Harvard</option>
+                    <option value="APA">APA 7th</option>
+                    <option value="MLA">MLA</option>
+                    <option value="Chicago">Chicago / Turabian</option>
+                    <option value="OSCOLA">OSCOLA</option>
+                    <option value="None">None required</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Job Attachment (Optional)</label>
+                <input type="file" className="form-input" onChange={e => setManualJobFile(e.target.files[0])} />
+                <div className="form-note">Upload the assignment brief or related documents.</div>
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Instructions / Description</label>
                 <textarea className="form-input" rows="4" placeholder="Provide detailed instructions for the consultant..." value={newJobData.description} onChange={e => setNewJobData({...newJobData, description: e.target.value})}></textarea>
               </div>
             </div>
             <div className="modal-foot">
-              <button className="btn btn-ghost" onClick={() => setShowCreateJobModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleCreateManualJob}>Create Job</button>
+              <button className="btn btn-ghost" onClick={() => setShowCreateJobModal(false)} disabled={manualJobUploading}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleCreateManualJob} disabled={manualJobUploading}>
+                {manualJobUploading ? 'Creating...' : 'Create Job'}
+              </button>
             </div>
           </div>
         </div>

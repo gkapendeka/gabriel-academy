@@ -759,16 +759,16 @@ export default function ConsultantPortal() {
                     <div style={{marginBottom: '16px', padding: '12px', background: 'rgba(59,130,246,0.05)', border: '1px solid var(--blue)', borderRadius: '8px'}}>
                       <div style={{fontSize: '12px', color: 'var(--blue)', fontWeight: 600, marginBottom: '8px'}}>APPROVED LEVELS</div>
                       <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                        {profile.approved_levels && profile.approved_levels.length > 0 ? profile.approved_levels.map(l => (
-                          <div key={l} className="badge" style={{background: 'var(--blue)', color: 'white'}}>{l}</div>
-                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>None</div>}
+                        {Array.isArray(profile.approved_levels) && profile.approved_levels.length > 0 ? profile.approved_levels.map(s => (
+                          <div key={s} className="badge" style={{background: 'var(--blue)', color: 'white'}}>{s}</div>
+                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>{typeof profile.approved_levels === 'string' ? profile.approved_levels : 'None'}</div>}
                       </div>
                       
                       <div style={{fontSize: '12px', color: 'var(--blue)', fontWeight: 600, marginTop: '16px', marginBottom: '8px'}}>APPROVED SUBJECTS</div>
                       <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-                        {profile.approved_subjects && profile.approved_subjects.length > 0 ? profile.approved_subjects.map(s => (
+                        {Array.isArray(profile.approved_subjects) && profile.approved_subjects.length > 0 ? profile.approved_subjects.map(s => (
                           <div key={s} className="badge" style={{background: 'var(--blue)', color: 'white'}}>{s}</div>
-                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>None</div>}
+                        )) : <div style={{fontSize: '13px', color: 'var(--muted)'}}>{typeof profile.approved_subjects === 'string' ? profile.approved_subjects : 'None'}</div>}
                       </div>
                     </div>
                     
