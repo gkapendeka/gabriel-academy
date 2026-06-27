@@ -29,7 +29,7 @@ const fmt = (n) => 'R' + parseFloat(n || 0).toLocaleString('en-ZA', {minimumFrac
 const fmtDate = (d) => { if (!d) return '—'; return new Date(d).toLocaleDateString('en-ZA', {day:'2-digit',month:'short',year:'numeric'}); };
 const daysLeft = (d) => { if (!d) return '—'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 0 ? 'Overdue!' : diff + ' day' + (diff === 1 ? '' : 's'); };
 const daysLeftColor = (d) => { if (!d) return 'var(--muted)'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 2 ? 'var(--red)' : diff <= 5 ? 'var(--gold)' : 'var(--muted)'; };
-const statusLabel = (s) => { const m = {new:'New Request',paid:'Awaiting Consultant',posted:'Posted to Consultants',pending:'Awaiting Consultant',active:'Attended to by Consultant',submitted:'Submitted for QA',qa_review:'Under QA Review',qa_failed:'QA Failed (Revising)',delivered:'Delivered to Client',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
+const statusLabel = (s) => { const m = {new:'New Request',paid:'Sourcing Consultant',posted:'Sourcing Consultant',pending:'Sourcing Consultant',active:'Attended to by Consultant',submitted:'Submitted for QA',qa_review:'Under QA Review',qa_failed:'QA Failed (Revising)',delivered:'Delivered to Client',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
 
 function StatusBadge({ status }) {
   const isGreen = status === 'delivered';
@@ -300,33 +300,46 @@ function JobModal({ job, profile, onClose }) {
                 <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
                   <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✓</div>
                   <div>
-                    <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Request Created</div>
+                    <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Request Created <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({new Date(job.created_at).toLocaleString()})</span></div>
                     <div style={{fontSize: '12px', color: 'var(--muted)'}}>You submitted the academic request.</div>
                   </div>
                 </div>
 
-                {localJob.revisions && localJob.revisions.length > 0 && localJob.revisions.map((rev, idx) => {
-                  const date = new Date(rev.timestamp).toLocaleDateString();
-                  const changedKeys = Object.keys(rev.changes || {});
-                  if (changedKeys.length === 0) return null;
-                  
-                  let summary = 'Job details updated.';
-                  if (changedKeys.includes('client_budget')) {
-                    summary = `Budget changed to R${rev.changes.client_budget.new}.`;
-                  } else if (changedKeys.includes('deadline')) {
-                    summary = `Deadline updated.`;
-                  }
-                  
-                  return (
-                    <div key={'rev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                      <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--card)', border: '2px solid var(--blue)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✎</div>
-                      <div>
-                        <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Job Edited ({date})</div>
-                        <div style={{fontSize: '12px', color: 'var(--muted)'}}>{summary}</div>
-                      </div>
+                {/* Status updates from internal messages */}
+                {(() => {
+                  const events = [];
+                  messages.forEach(m => {
+                    if (m.is_internal) {
+                      if (m.body && m.body.includes('Budget changed to')) {
+                        events.push({
+                          date: new Date(m.created_at).toLocaleString(),
+                          title: 'Job Edited',
+                          summary: 'Budget changed to R' + m.body.split('to R')[1],
+                          icon: '✎',
+                          color: 'var(--blue)'
+                        });
+                      } else if (m.body && m.body.startsWith('STATUS_UPDATE:')) {
+                        const newStatus = m.body.split(':')[1];
+                        events.push({
+                          date: new Date(m.created_at).toLocaleString(),
+                          title: 'Status Updated',
+                          summary: `Status changed to ${statusLabel(newStatus)}.`,
+                          icon: 'ℹ',
+                          color: 'var(--gold)'
+                        });
+                      }
+                    }
+                  });
+                  return events;
+                })().map((event, idx) => (
+                  <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--card)', border: `2px solid ${event.color}`, color: event.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>{event.icon}</div>
+                    <div>
+                      <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>{event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date})</span></div>
+                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
 
                 {job.status !== 'new' && (
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
@@ -521,8 +534,10 @@ export default function ClientPortal() {
     setTimeout(() => setToast(null), 3000);
   };
   
+  const [taxonomy, setTaxonomy] = useState([]);
+  
   const [formData, setFormData] = useState({
-    title: '', subject: '', custom_subject: '', level: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: []
+    title: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: []
   });
   const [uploading, setUploading] = useState(false);
   
@@ -531,6 +546,12 @@ export default function ClientPortal() {
   useEffect(() => {
     if (profile) setProfileForm({ display_name: profile.display_name || '', phone: profile.phone || '' });
   }, [profile]);
+
+  useEffect(() => {
+    supabase.from('system_settings').select('*').eq('setting_key', 'academic_taxonomy').single().then(({data}) => {
+      if (data && data.setting_value) setTaxonomy(data.setting_value);
+    });
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'payments' && profile?.id) {
@@ -611,12 +632,11 @@ export default function ClientPortal() {
         uploadedAttachments.push({ name: file.name, url: urlData.publicUrl });
       }
 
-      const finalSubject = formData.subject === 'Other' ? formData.custom_subject : formData.subject;
-
       const { error } = await supabase.from('jobs').insert([{
         title: formData.title,
-        subject: finalSubject,
+        subject: formData.subject === 'Other' ? formData.custom_subject : formData.subject,
         level: formData.level,
+        faculty: formData.faculty || null,
         pages: formData.pages,
         deadline: new Date(formData.deadline).toISOString(),
         client_budget: formData.client_budget,
@@ -629,8 +649,8 @@ export default function ClientPortal() {
       }]);
       if (error) throw error;
       showToast('Request submitted successfully!', 'success');
-      setActiveTab('myjobs');
-      setFormData({ title: '', subject: '', custom_subject: '', level: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: [] });
+      setFormData({ title: '', subject: '', custom_subject: '', level: '', faculty: '', pages: 1, deadline: '', client_budget: 0, instructions: '', reference_style: 'APA 7th', files: [] });
+      setActiveTab('dashboard');
     } catch (err) {
       showToast('Error creating request: ' + err.message, 'error');
     } finally {
@@ -846,31 +866,58 @@ function TabNewJob({ formData, setFormData, submitNewRequest, setActiveTab, uplo
         <form onSubmit={handleInitialSubmit}>
           <div className="form-group"><label className="form-label">Assignment Title / Topic *</label><input required className="form-input" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="e.g. Research Proposal on AI in South African Banking" /></div>
           <div className="form-row">
-            <div className="form-group"><label className="form-label">Subject / Discipline *</label>
-              <select required className="form-input" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})}>
-                <option value="">Select subject...</option>
-                <option>Mathematics</option>
-                <option>Physics</option>
-                <option>Computer Science</option>
-                <option>Business</option>
-                <option>Economics</option>
-                <option>English Literature</option>
-                <option>Other</option>
-              </select>
-              {formData.subject === 'Other' && (
-                <input required type="text" className="form-input" style={{marginTop: '8px'}} placeholder="Please specify subject..." value={formData.custom_subject} onChange={e => setFormData({...formData, custom_subject: e.target.value})} />
-              )}
-            </div>
             <div className="form-group"><label className="form-label">Academic Level *</label>
-              <select required className="form-input" value={formData.level} onChange={e => setFormData({...formData, level: e.target.value})}>
+              <select required className="form-input" value={formData.level} onChange={e => setFormData({...formData, level: e.target.value, faculty: '', subject: ''})}>
                 <option value="">Select level...</option>
-                <option>Primary School</option>
-                <option>Secondary School</option>
-                <option>Undergraduate</option>
-                <option>Postgraduate (Honours)</option>
-                <option>Postgraduate (Masters/PhD)</option>
+                {taxonomy.map((t, idx) => <option key={idx} value={t.level}>{t.level}</option>)}
               </select>
             </div>
+            
+            {/* Find selected level in taxonomy */}
+            {(() => {
+              const selectedTax = taxonomy.find(t => t.level === formData.level);
+              if (!selectedTax) return <div className="form-group"></div>;
+              
+              if (selectedTax.faculties && selectedTax.faculties.length > 0) {
+                return (
+                  <div className="form-group"><label className="form-label">Faculty *</label>
+                    <select required className="form-input" value={formData.faculty} onChange={e => setFormData({...formData, faculty: e.target.value, subject: ''})}>
+                      <option value="">Select faculty...</option>
+                      {selectedTax.faculties.map((f, idx) => <option key={idx} value={f.name}>{f.name}</option>)}
+                    </select>
+                  </div>
+                );
+              }
+              return <div className="form-group"></div>;
+            })()}
+          </div>
+
+          <div className="form-group"><label className="form-label">Subject / Discipline *</label>
+            <select required className="form-input" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})}>
+              <option value="">Select subject...</option>
+              {(() => {
+                const selectedTax = taxonomy.find(t => t.level === formData.level);
+                if (!selectedTax) return null;
+                
+                let subjects = [];
+                if (selectedTax.faculties && selectedTax.faculties.length > 0) {
+                  const selFac = selectedTax.faculties.find(f => f.name === formData.faculty);
+                  if (selFac) subjects = selFac.subjects || [];
+                } else {
+                  subjects = selectedTax.subjects || [];
+                }
+                
+                return (
+                  <>
+                    {subjects.map((s, idx) => <option key={idx} value={s}>{s}</option>)}
+                    <option value="Other">Other</option>
+                  </>
+                );
+              })()}
+            </select>
+            {formData.subject === 'Other' && (
+              <input required type="text" className="form-input" style={{marginTop: '8px'}} placeholder="Please specify subject..." value={formData.custom_subject} onChange={e => setFormData({...formData, custom_subject: e.target.value})} />
+            )}
           </div>
           <div className="form-row">
             <div className="form-group"><label className="form-label">Number of Pages *</label><input required type="number" min="1" className="form-input" value={formData.pages} onChange={e => setFormData({...formData, pages: parseInt(e.target.value)})} placeholder="e.g. 8" /></div>

@@ -2014,6 +2014,14 @@ export default function AdminPortal() {
             const { error } = await supabase.from('jobs').update({ status: newStatus }).eq('id', jobId);
             if (error) toast.error('Error updating status: ' + error.message);
             else {
+              // Log the status change internally
+              await supabase.from('messages').insert({
+                job_id: jobId,
+                sender_id: profile.id,
+                recipient_id: selectedJob.client_id, // keep it client facing so they see order progress, or we can use is_internal
+                body: `STATUS_UPDATE:${newStatus}`,
+                is_internal: true
+              });
               toast.success(`Status updated to ${newStatus}`);
               setSelectedJob(null);
             }
