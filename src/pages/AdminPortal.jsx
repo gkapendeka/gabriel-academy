@@ -1736,7 +1736,8 @@ export default function AdminPortal() {
 
   const getCol = (statuses) => jobs.filter(j => 
     statuses.includes(j.status) &&
-    (j.title?.toLowerCase().includes(searchQuery.toLowerCase()) || j.job_ref?.toLowerCase().includes(searchQuery.toLowerCase()))
+    ((j.title || '').toLowerCase().includes((searchQuery || '').toLowerCase()) || 
+     (j.job_ref || '').toLowerCase().includes((searchQuery || '').toLowerCase()))
   );
 
   // Finances
