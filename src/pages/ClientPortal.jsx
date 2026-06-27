@@ -66,6 +66,13 @@ function JobModal({ job, profile, onClose }) {
     instructions: job.instructions || '',
     deadline: job.deadline ? job.deadline.split('T')[0] : ''
   });
+  const [payments, setPayments] = useState([]);
+
+  useEffect(() => {
+    supabase.from('payments').select('*').eq('job_id', job.id).order('created_at', { ascending: false }).then(({data}) => {
+      if (data) setPayments(data);
+    });
+  }, [job.id]);
 
   const handleSaveEdit = async () => {
     setIsSavingEdit(true);
@@ -262,6 +269,28 @@ function JobModal({ job, profile, onClose }) {
             </div>
 
             <div className="card-box" style={{marginTop: '16px'}}>
+              <div className="card-box-title" style={{fontSize: '14px', marginBottom: '12px'}}>Payments Made</div>
+              {payments.length > 0 ? (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  {payments.map(p => (
+                    <div key={p.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', background: 'var(--bg)', padding: '8px 12px', borderRadius: '4px'}}>
+                      <div>
+                        <div style={{fontWeight: 600}}>R{p.amount} <span style={{color: 'var(--muted)', fontWeight: 400}}>via {p.method}</span></div>
+                        <div style={{color: 'var(--muted)'}}>{new Date(p.paid_at).toLocaleDateString()} {p.comment ? `- ${p.comment}` : ''}</div>
+                      </div>
+                      <StatusBadge status={p.status} />
+                    </div>
+                  ))}
+                  <div style={{textAlign: 'right', fontSize: '13px', fontWeight: 600, marginTop: '8px'}}>
+                    Total Paid: R{payments.reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2)} / R{localJob.client_budget}
+                  </div>
+                </div>
+              ) : (
+                <div style={{fontSize: '12px', color: 'var(--muted)'}}>No payments have been recorded for this job yet.</div>
+              )}
+            </div>
+
+            <div className="card-box" style={{marginTop: '16px'}}>
               <div className="card-box-title" style={{fontSize: '14px', marginBottom: '16px'}}>Order Progress</div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative'}}>
@@ -309,11 +338,25 @@ function JobModal({ job, profile, onClose }) {
                   </div>
                 )}
 
+                {['posted', 'active', 'submitted', 'qa_review', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
+                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: job.status === 'posted' ? 'var(--blue)' : 'var(--green)', color: job.status === 'posted' ? '#fff' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
+                      {job.status === 'posted' ? '●' : '✓'}
+                    </div>
+                    <div>
+                      <div style={{fontWeight: 600, fontSize: '13px', color: job.status === 'posted' ? 'var(--blue)' : 'var(--text)'}}>Sourcing Consultant</div>
+                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>Gabriel Academics is finding the best consultant for your assignment...</div>
+                    </div>
+                  </div>
+                )}
+
                 {['active', 'submitted', 'qa_review', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✓</div>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: job.status === 'active' ? 'var(--blue)' : 'var(--green)', color: job.status === 'active' ? '#fff' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
+                      {job.status === 'active' ? '●' : '✓'}
+                    </div>
                     <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Consultant Assigned</div>
+                      <div style={{fontWeight: 600, fontSize: '13px', color: job.status === 'active' ? 'var(--blue)' : 'var(--text)'}}>Consultant Assigned</div>
                       <div style={{fontSize: '12px', color: 'var(--muted)'}}>An expert consultant is actively working on your request.</div>
                     </div>
                   </div>
@@ -729,10 +772,11 @@ function TabDashboard({ jobs, profile, setActiveTab, setCheckoutJob, setSelected
   return (
     <>
       <div className="page-header"><div className="page-title">My Dashboard</div><div className="page-sub">Track your academic assistance orders</div></div>
-      <div className="stats-grid">
+      <div className="stats-grid" style={{gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))'}}>
         <div className="stat-card"><div className="stat-label">Active Orders</div><div className="stat-value" style={{color: 'var(--blue)'}}>{activeCount}</div></div>
         <div className="stat-card"><div className="stat-label">Delivered</div><div className="stat-value" style={{color: 'var(--green)'}}>{doneCount}</div></div>
-        <div className="stat-card"><div className="stat-label">Total Invested</div><div className="stat-value" style={{color: 'var(--gold)'}}>{fmt(spent)}</div></div>
+        <div className="stat-card"><div className="stat-label">Total Invested</div><div className="stat-value">{fmt(spent)}</div></div>
+        <div className="stat-card" style={{borderColor: 'var(--gold)', background: 'rgba(245,158,11,.05)'}}><div className="stat-label" style={{color: 'var(--gold)'}}>Wallet Balance</div><div className="stat-value" style={{color: 'var(--gold)'}}>R{profile?.wallet_balance ? parseFloat(profile.wallet_balance).toFixed(2) : '0.00'}</div></div>
         <div className="stat-card"><div className="stat-label">My ID</div><div className="stat-value" style={{fontSize: '16px', color: 'var(--blue)'}}>{profile?.masked_id || '—'}</div></div>
       </div>
       

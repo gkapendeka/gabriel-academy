@@ -28,6 +28,21 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
   const [editBudget, setEditBudget] = useState(job.client_budget || 0);
   const [moderatedInstructions, setModeratedInstructions] = useState(job.instructions || '');
   const [postChecks, setPostChecks] = useState({ deadline: false, moderation: false, profit: false });
+  const [payments, setPayments] = useState([]);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState('EFT');
+  const [payComment, setPayComment] = useState('');
+  const [payTarget, setPayTarget] = useState('job');
+  const [paymentVerified, setPaymentVerified] = useState(job.payment_verified || false);
+
+  const loadFinancials = async () => {
+    if (!job.client_id) return;
+    const { data: pData } = await supabase.from('payments').select('*').eq('client_id', job.client_id).order('created_at', { ascending: false });
+    if (pData) setPayments(pData);
+    const { data: cData } = await supabase.from('profiles').select('wallet_balance').eq('id', job.client_id).single();
+    if (cData) setWalletBalance(cData.wallet_balance || 0);
+  };
 
   useEffect(() => {
     if (job.status === 'delivered') {
@@ -43,7 +58,43 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
       // format for datetime-local input
       setConsultantDeadline(d.toISOString().slice(0, 16));
     }
-  }, [job.id, job.status, job.deadline]);
+    loadFinancials();
+  }, [job.id, job.status, job.deadline, job.client_id]);
+
+  const handleLogPayment = async () => {
+    if (!payAmount || isNaN(payAmount) || Number(payAmount) <= 0) return alert('Enter valid amount');
+    if (payTarget === 'job' && payMethod === 'Wallet' && walletBalance < Number(payAmount)) {
+      return alert('Insufficient wallet balance');
+    }
+    try {
+      const { error } = await supabase.rpc('admin_log_payment', {
+        p_client_id: job.client_id,
+        p_job_id: payTarget === 'job' ? job.id : null,
+        p_amount: Number(payAmount),
+        p_method: payMethod,
+        p_comment: payComment
+      });
+      if (error) throw error;
+      toast.success('Payment logged successfully');
+      setPayAmount('');
+      setPayComment('');
+      loadFinancials();
+    } catch (err) {
+      toast.error('Error logging payment: ' + err.message);
+    }
+  };
+
+  const handleToggleVerified = async (e) => {
+    const val = e.target.checked;
+    try {
+      const { error } = await supabase.from('jobs').update({ payment_verified: val }).eq('id', job.id);
+      if (error) throw error;
+      setPaymentVerified(val);
+      job.payment_verified = val;
+    } catch (err) {
+      toast.error('Error updating verified status: ' + err.message);
+    }
+  };
 
   const handleSend = () => {
     if (!msgText.trim()) return;
@@ -178,6 +229,57 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
               </div>
             )}
 
+            {/* Financials & Payments */}
+            <div className="card-box" style={{borderColor: 'var(--green)'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px'}}>
+                <div style={{fontWeight: 600, color: 'var(--green)'}}>Financials & Payments</div>
+                <div style={{fontSize: '13px'}}>Client Wallet Balance: <strong style={{color: 'var(--text)'}}>R{walletBalance.toFixed(2)}</strong></div>
+              </div>
+              
+              <div style={{display: 'flex', gap: '8px', marginBottom: '16px', background: 'var(--bg)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', flexWrap: 'wrap'}}>
+                <input type="number" className="form-input" style={{flex: 1, minWidth: '100px'}} placeholder="Amount (R)" value={payAmount} onChange={e => setPayAmount(e.target.value)} />
+                <select className="form-input" style={{width: '120px'}} value={payMethod} onChange={e => setPayMethod(e.target.value)}>
+                  <option value="EFT">EFT</option>
+                  <option value="Card">Card</option>
+                  <option value="SnapScan">SnapScan</option>
+                  <option value="PayFast">PayFast</option>
+                  <option value="Wallet">Wallet</option>
+                </select>
+                <select className="form-input" style={{width: '120px'}} value={payTarget} onChange={e => setPayTarget(e.target.value)}>
+                  <option value="job">Pay to Job</option>
+                  <option value="wallet">Add to Wallet</option>
+                </select>
+                <input type="text" className="form-input" style={{flex: 2, minWidth: '150px'}} placeholder="Comment (e.g. 50% Deposit)" value={payComment} onChange={e => setPayComment(e.target.value)} />
+                <button className="btn btn-primary btn-sm" onClick={handleLogPayment}>Log Payment</button>
+              </div>
+
+              {payments.length > 0 ? (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px'}}>
+                  {payments.map(p => (
+                    <div key={p.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', background: 'var(--bg)', padding: '8px 12px', borderRadius: '4px'}}>
+                      <div>
+                        <div style={{fontWeight: 600}}>R{p.amount} <span style={{color: 'var(--muted)', fontWeight: 400}}>via {p.method}</span></div>
+                        <div style={{color: 'var(--muted)'}}>{new Date(p.paid_at).toLocaleDateString()} {p.job_id ? '' : '(Added to Wallet)'} {p.comment ? `- ${p.comment}` : ''}</div>
+                      </div>
+                      <StatusBadge status={p.status} />
+                    </div>
+                  ))}
+                  <div style={{textAlign: 'right', fontSize: '13px', fontWeight: 600, marginTop: '8px'}}>
+                    Total Job Payments: R{payments.filter(p => p.job_id).reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2)} / R{job.client_budget}
+                  </div>
+                </div>
+              ) : (
+                <div style={{fontSize: '12px', color: 'var(--muted)', marginBottom: '12px'}}>No payments logged yet.</div>
+              )}
+              
+              <div style={{borderTop: '1px solid var(--border)', paddingTop: '12px', marginTop: '4px'}}>
+                <label style={{display: 'flex', gap: '12px', alignItems: 'center', cursor: 'pointer'}}>
+                  <input type="checkbox" checked={paymentVerified} onChange={handleToggleVerified} />
+                  <span style={{fontSize: '13px', fontWeight: 600, color: paymentVerified ? 'var(--green)' : 'var(--text)'}}>Payment Arrangements Verified (Manual Lift)</span>
+                </label>
+              </div>
+            </div>
+
             {(job.status === 'new' || job.status === 'paid') && (
               <div className="card-box">
                 <div style={{fontWeight: 600, marginBottom: '12px'}}>Post to Consultants</div>
@@ -293,7 +395,7 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
           {(job.status === 'new' || job.status === 'paid') && (
             <button 
               className="btn btn-primary" 
-              disabled={!postChecks.deadline || !postChecks.moderation || !postChecks.profit}
+              disabled={!postChecks.deadline || !postChecks.moderation || !postChecks.profit || !paymentVerified}
               onClick={() => onPost(job, payoutRate, consultantDeadline, moderatedInstructions)}
             >
               Post Job to Mission Board
@@ -615,7 +717,7 @@ function UsersTab({ adminProfile, users, setUsers, role }) {
       }).eq('id', data.user.id);
       setShowCreateModal(false);
       setFormData({ email: '', password: '', role: 'client', display_name: '' });
-      fetchUsers();
+      setUsers([{ id: data.user.id, email: formData.email, role: formData.role, display_name: formData.display_name, is_verified: true, is_active: true, created_at: new Date().toISOString() }, ...users]);
     }
   };
 
@@ -682,12 +784,12 @@ function UsersTab({ adminProfile, users, setUsers, role }) {
                    user.is_verified ? (
                      <span className="badge badge-delivered" style={{fontSize: '10px'}}>Active</span>
                   ) : (
-                     <span className="badge badge-cancelled" style={{fontSize: '10px'}}>{activeTab === 'consultants' ? 'Pending Verification' : 'Suspended'}</span>
+                     <span className="badge badge-cancelled" style={{fontSize: '10px'}}>{role === 'consultant' ? 'Pending Verification' : 'Suspended'}</span>
                   )}
                 </td>
                 <td style={{padding: '12px 16px', textAlign: 'right'}}>
                   <div style={{display: 'flex', gap: '8px', justifyContent: 'flex-end'}}>
-                    {!user.is_active ? null : !user.is_verified && activeTab === 'consultants' && (
+                    {!user.is_active ? null : !user.is_verified && role === 'consultant' && (
                       <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); handleVerify(user.id, user.email, user.display_name); }}>Verify</button>
                     )}
                     {user.is_active && (

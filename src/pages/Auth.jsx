@@ -21,6 +21,9 @@ export default function Auth() {
   const [qualification, setQualification] = useState('');
   const [subjects, setSubjects] = useState('');
   const [qualFile, setQualFile] = useState(null);
+  const [academicLevel, setAcademicLevel] = useState('');
+  const [yearsExperience, setYearsExperience] = useState('');
+  const [linkedinUrl, setLinkedinUrl] = useState('');
 
   React.useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -80,7 +83,10 @@ export default function Auth() {
               phone: phone,
               role: role, // Default to requested role
               qualification: qualification,
-              subjects: subjects
+              subjects: subjects,
+              academic_level: academicLevel,
+              years_experience: yearsExperience,
+              linkedin_url: linkedinUrl
             }
           }
         });
@@ -182,8 +188,27 @@ export default function Auth() {
                       <div className="form-note">Please attach your transcript or degree (PDF/Img)</div>
                     </div>
                     <div className="form-group">
+                      <label className="form-label">Academic Level You Can Handle</label>
+                      <select className="form-input" required value={academicLevel} onChange={e => setAcademicLevel(e.target.value)}>
+                        <option value="">Select level...</option>
+                        <option value="High School">High School</option>
+                        <option value="Undergraduate">Undergraduate</option>
+                        <option value="Honours">Honours</option>
+                        <option value="Masters">Masters</option>
+                        <option value="PhD">PhD</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Years of Experience</label>
+                      <input type="number" min="0" max="50" className="form-input" required value={yearsExperience} onChange={e => setYearsExperience(e.target.value)} placeholder="e.g. 3" />
+                    </div>
+                    <div className="form-group">
                       <label className="form-label">Subjects You Cover</label>
                       <input type="text" className="form-input" required value={subjects} onChange={e => setSubjects(e.target.value)} placeholder="e.g. Maths, Physics, Programming" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">LinkedIn / CV Link (Optional)</label>
+                      <input type="url" className="form-input" value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/..." />
                     </div>
                   </>
                 )}
