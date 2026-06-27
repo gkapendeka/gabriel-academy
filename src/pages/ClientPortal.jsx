@@ -55,6 +55,44 @@ function JobModal({ job, profile, onClose }) {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [localAttachments, setLocalAttachments] = useState(job.attachments || []);
+  const [localJob, setLocalJob] = useState(job);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: job.title,
+    subject: job.subject,
+    level: job.level,
+    pages: job.pages,
+    instructions: job.instructions || '',
+    deadline: job.deadline ? job.deadline.split('T')[0] : ''
+  });
+
+  const handleSaveEdit = async () => {
+    setIsSavingEdit(true);
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .update({
+          title: editForm.title,
+          subject: editForm.subject,
+          level: editForm.level,
+          pages: parseInt(editForm.pages) || job.pages,
+          instructions: editForm.instructions,
+          deadline: new Date(editForm.deadline).toISOString()
+        })
+        .eq('id', job.id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      setLocalJob(data);
+      setIsEditing(false);
+    } catch (err) {
+      alert('Error updating job: ' + err.message);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const handleUploadAttachment = async (e) => {
     const file = e.target.files[0];
@@ -128,19 +166,73 @@ function JobModal({ job, profile, onClose }) {
         <div className="modal-body" style={{display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
           <div style={{flex: 1}}>
             <div className="card-box">
-              <div className="card-box-title">{job.title}</div>
-              <div className="two-col" style={{marginBottom: 0}}>
-                <div>
-                  <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Subject</div>
-                  <div style={{fontSize: '13px'}}>{job.subject}</div>
-                </div>
-                <div>
-                  <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Status</div>
-                  <div style={{fontSize: '13px'}}>
-                    <StatusBadge status={job.status} />
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                <div className="card-box-title" style={{marginBottom: isEditing ? '12px' : 0}}>{localJob.title}</div>
+                {['new', 'posted', 'pending'].includes(localJob.status) && (
+                  <button className="btn btn-ghost btn-sm" onClick={() => setIsEditing(!isEditing)}>
+                    {isEditing ? 'Cancel Edit' : 'Edit Job'}
+                  </button>
+                )}
+              </div>
+              
+              {isEditing ? (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px'}}>
+                  <div className="form-group" style={{marginBottom: 0}}>
+                    <label className="form-label">Title</label>
+                    <input type="text" className="form-input" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
+                  </div>
+                  <div className="two-col" style={{marginBottom: 0}}>
+                    <div className="form-group" style={{marginBottom: 0}}>
+                      <label className="form-label">Subject</label>
+                      <input type="text" className="form-input" value={editForm.subject} onChange={e => setEditForm({...editForm, subject: e.target.value})} />
+                    </div>
+                    <div className="form-group" style={{marginBottom: 0}}>
+                      <label className="form-label">Deadline</label>
+                      <input type="date" className="form-input" value={editForm.deadline} onChange={e => setEditForm({...editForm, deadline: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="two-col" style={{marginBottom: 0}}>
+                    <div className="form-group" style={{marginBottom: 0}}>
+                      <label className="form-label">Level</label>
+                      <input type="text" className="form-input" value={editForm.level} onChange={e => setEditForm({...editForm, level: e.target.value})} />
+                    </div>
+                    <div className="form-group" style={{marginBottom: 0}}>
+                      <label className="form-label">Pages</label>
+                      <input type="number" className="form-input" value={editForm.pages} onChange={e => setEditForm({...editForm, pages: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="form-group" style={{marginBottom: 0}}>
+                    <label className="form-label">Instructions</label>
+                    <textarea className="form-input" rows="3" value={editForm.instructions} onChange={e => setEditForm({...editForm, instructions: e.target.value})}></textarea>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: '8px'}}>
+                    <button className="btn btn-primary" onClick={handleSaveEdit} disabled={isSavingEdit}>
+                      {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                    </button>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="two-col" style={{marginTop: '12px', marginBottom: 0}}>
+                    <div>
+                      <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Subject</div>
+                      <div style={{fontSize: '13px'}}>{localJob.subject}</div>
+                    </div>
+                    <div>
+                      <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Status</div>
+                      <div style={{fontSize: '13px'}}>
+                        <StatusBadge status={localJob.status} />
+                      </div>
+                    </div>
+                  </div>
+                  {localJob.instructions && (
+                    <div style={{marginTop: '12px', fontSize: '13px', whiteSpace: 'pre-wrap'}}>
+                      <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Instructions</div>
+                      {localJob.instructions}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="card-box" style={{marginTop: '16px'}}>
@@ -183,6 +275,29 @@ function JobModal({ job, profile, onClose }) {
                     <div style={{fontSize: '12px', color: 'var(--muted)'}}>You submitted the academic request.</div>
                   </div>
                 </div>
+
+                {localJob.revisions && localJob.revisions.length > 0 && localJob.revisions.map((rev, idx) => {
+                  const date = new Date(rev.timestamp).toLocaleDateString();
+                  const changedKeys = Object.keys(rev.changes || {});
+                  if (changedKeys.length === 0) return null;
+                  
+                  let summary = 'Job details updated.';
+                  if (changedKeys.includes('client_budget')) {
+                    summary = `Budget changed to R${rev.changes.client_budget.new}.`;
+                  } else if (changedKeys.includes('deadline')) {
+                    summary = `Deadline updated.`;
+                  }
+                  
+                  return (
+                    <div key={'rev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
+                      <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--card)', border: '2px solid var(--blue)', color: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✎</div>
+                      <div>
+                        <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Job Edited ({date})</div>
+                        <div style={{fontSize: '12px', color: 'var(--muted)'}}>{summary}</div>
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {job.status !== 'new' && (
                   <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
