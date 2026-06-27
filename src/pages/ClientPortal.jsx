@@ -294,112 +294,95 @@ function JobModal({ job, profile, onClose }) {
               <div className="card-box-title" style={{fontSize: '14px', marginBottom: '16px'}}>Order Progress</div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative'}}>
-                {/* Visual Line */}
-                <div style={{position: 'absolute', left: '11px', top: '10px', bottom: '10px', width: '2px', background: 'var(--border)'}}></div>
-                
-                <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                  <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✓</div>
-                  <div>
-                    <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Request Created <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({new Date(job.created_at).toLocaleString()})</span></div>
-                    <div style={{fontSize: '12px', color: 'var(--muted)'}}>You submitted the academic request.</div>
-                  </div>
-                </div>
-
-                {/* Status updates from internal messages */}
+                {/* Order Progress Events */}
                 {(() => {
                   const events = [];
+                  
+                  // 1. Creation
+                  events.push({
+                    date: new Date(job.created_at),
+                    title: 'Request Created',
+                    summary: 'You submitted the academic request.',
+                    icon: '✓',
+                    color: 'var(--green)'
+                  });
+
+                  // 2. Payments
+                  payments.forEach(p => {
+                    if (['cleared', 'completed', 'paid', 'approved'].includes(p.status?.toLowerCase())) {
+                      events.push({
+                        date: new Date(p.created_at || p.paid_at || Date.now()),
+                        title: 'Payment Secured',
+                        summary: `Funds (R${p.amount}) allocated for this order.`,
+                        icon: '✓',
+                        color: 'var(--green)'
+                      });
+                    }
+                  });
+
+                  // 3. Internal Messages (Status / Budget)
                   messages.forEach(m => {
                     if (m.is_internal) {
                       if (m.body && m.body.includes('Budget changed to')) {
                         events.push({
-                          date: new Date(m.created_at).toLocaleString(),
-                          title: 'Job Edited',
+                          date: new Date(m.created_at),
+                          title: 'Budget Adjusted',
                           summary: 'Budget changed to R' + m.body.split('to R')[1],
                           icon: '✎',
                           color: 'var(--blue)'
                         });
                       } else if (m.body && m.body.startsWith('STATUS_UPDATE:')) {
                         const newStatus = m.body.split(':')[1];
+                        let icon = 'ℹ';
+                        let color = 'var(--gold)';
+                        let title = 'Order Progress';
+                        let summary = `Status changed to: ${statusLabel(newStatus)}.`;
+                        
+                        if (['posted', 'pending'].includes(newStatus)) {
+                          icon = '●'; color = 'var(--blue)'; title = 'Sourcing Consultant'; summary = 'Gabriel Academics is finding the best consultant for your assignment...';
+                        } else if (newStatus === 'active') {
+                          icon = '●'; color = 'var(--blue)'; title = 'Consultant Assigned'; summary = 'An expert consultant is actively working on your request.';
+                        } else if (['submitted', 'qa_review'].includes(newStatus)) {
+                          icon = '●'; color = 'var(--blue)'; title = 'QA Review & Follow-up'; summary = 'The consultant submitted the work. Our Academic Team is currently reviewing it for quality.';
+                        } else if (newStatus === 'qa_failed') {
+                          icon = '●'; color = 'var(--red)'; title = 'Revisions Requested'; summary = 'Our QA team requested revisions from the consultant to ensure top quality.';
+                        } else if (['delivered', 'completed'].includes(newStatus)) {
+                          icon = '✓'; color = 'var(--green)'; title = 'Order Delivered'; summary = 'Work passed quality assurance checks and is ready to download!';
+                        }
+                        
                         events.push({
-                          date: new Date(m.created_at).toLocaleString(),
-                          title: 'Status Updated',
-                          summary: `Status changed to ${statusLabel(newStatus)}.`,
-                          icon: 'ℹ',
-                          color: 'var(--gold)'
+                          date: new Date(m.created_at),
+                          title,
+                          summary,
+                          icon,
+                          color
                         });
                       }
                     }
                   });
-                  return events;
-                })().map((event, idx) => (
-                  <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--card)', border: `2px solid ${event.color}`, color: event.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>{event.icon}</div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>{event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date})</span></div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
-                    </div>
-                  </div>
-                ))}
 
-                {job.status !== 'new' && (
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✓</div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--text)'}}>Payment Secured</div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>Funds have been allocated for this order.</div>
-                    </div>
-                  </div>
-                )}
+                  // Sort chronologically
+                  events.sort((a, b) => a.date - b.date);
 
-                {['posted', 'active', 'submitted', 'qa_review', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: job.status === 'posted' ? 'var(--blue)' : 'var(--green)', color: job.status === 'posted' ? '#fff' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                      {job.status === 'posted' ? '●' : '✓'}
-                    </div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: job.status === 'posted' ? 'var(--blue)' : 'var(--text)'}}>Sourcing Consultant</div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>Gabriel Academics is finding the best consultant for your assignment...</div>
-                    </div>
-                  </div>
-                )}
-
-                {['active', 'submitted', 'qa_review', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: job.status === 'active' ? 'var(--blue)' : 'var(--green)', color: job.status === 'active' ? '#fff' : '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                      {job.status === 'active' ? '●' : '✓'}
-                    </div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: job.status === 'active' ? 'var(--blue)' : 'var(--text)'}}>Consultant Assigned</div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>An expert consultant is actively working on your request.</div>
-                    </div>
-                  </div>
-                )}
-
-                {['submitted', 'qa_review', 'qa_failed', 'delivered', 'completed'].includes(job.status) && (
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: ['delivered', 'completed'].includes(job.status) ? 'var(--green)' : 'var(--blue)', color: ['delivered', 'completed'].includes(job.status) ? '#000' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
-                      {['delivered', 'completed'].includes(job.status) ? '✓' : '●'}
-                    </div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: ['delivered', 'completed'].includes(job.status) ? 'var(--text)' : 'var(--blue)'}}>QA Review & Follow-up</div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>
-                        {job.status === 'qa_failed' ? 'Our QA team requested revisions from the consultant to ensure top quality.' : 
-                         job.status === 'delivered' || job.status === 'completed' ? 'Work passed quality assurance checks.' :
-                         'The consultant submitted the work. Our Academic Team is currently reviewing it for quality.'}
+                  return events.map((event, idx) => {
+                    // Check if this is the last event to show a continuous line or not
+                    const isLast = idx === events.length - 1;
+                    return (
+                      <div key={'ev'+idx} style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative', marginBottom: isLast ? '0' : '16px'}}>
+                        {!isLast && <div style={{position: 'absolute', left: '11px', top: '24px', bottom: '-16px', width: '2px', background: 'var(--border)', zIndex: 0}}></div>}
+                        <div style={{width: '24px', height: '24px', borderRadius: '50%', background: event.color === 'var(--card)' ? 'var(--card)' : event.color, border: event.color === 'var(--card)' ? '2px solid var(--gold)' : 'none', color: event.color === 'var(--card)' ? 'var(--gold)' : (event.color === 'var(--blue)' ? '#fff' : '#000'), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>
+                          {event.icon}
+                        </div>
+                        <div style={{flex: 1}}>
+                          <div style={{fontWeight: 600, fontSize: '13px', color: event.color === 'var(--green)' ? 'var(--green)' : (event.color === 'var(--blue)' ? 'var(--blue)' : 'var(--text)')}}>
+                            {event.title} <span style={{fontSize: '11px', color: 'var(--muted)', fontWeight: 400}}>({event.date.toLocaleString()})</span>
+                          </div>
+                          <div style={{fontSize: '12px', color: 'var(--muted)'}}>{event.summary}</div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {['delivered', 'completed'].includes(job.status) && (
-                  <div style={{display: 'flex', gap: '12px', alignItems: 'flex-start', position: 'relative'}}>
-                    <div style={{width: '24px', height: '24px', borderRadius: '50%', background: 'var(--green)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', zIndex: 1}}>✓</div>
-                    <div>
-                      <div style={{fontWeight: 600, fontSize: '13px', color: 'var(--green)'}}>Order Delivered</div>
-                      <div style={{fontSize: '12px', color: 'var(--muted)'}}>Your final work is ready to download!</div>
-                    </div>
-                  </div>
-                )}
+                    );
+                  });
+                })()}
               </div>
             </div>
 
