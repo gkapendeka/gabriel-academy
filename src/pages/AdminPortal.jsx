@@ -442,9 +442,28 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
   const [actionComments, setActionComments] = useState('');
   
   // Scope Approval State
-  const [scopeDecision, setScopeDecision] = useState('approve');
-  const [scopeReason, setScopeReason] = useState('Qualifications Verified');
-  const [scopeComments, setScopeComments] = useState('');
+  const [scopeDecisions, setScopeDecisions] = useState({});
+
+  useEffect(() => {
+    if (user.scope_requests) {
+      const items = [];
+      if (user.scope_requests.levels) {
+         user.scope_requests.levels.split(',').forEach(l => {
+           if (l.trim()) items.push(`Level: ${l.trim()}`);
+         });
+      }
+      if (user.scope_requests.subjects) {
+         user.scope_requests.subjects.split(',').forEach(s => {
+           if (s.trim()) items.push(`Subject: ${s.trim()}`);
+         });
+      }
+      const initial = {};
+      items.forEach(item => {
+        initial[item] = { decision: 'approve', reason: 'Qualifications Verified', comments: '' };
+      });
+      setScopeDecisions(initial);
+    }
+  }, [user.scope_requests]);
 
   useEffect(() => {
     fetchUserData();
@@ -496,39 +515,50 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
   const handleScopeDecisionSubmit = async () => {
     if (!user.scope_requests) return;
     try {
-      if (scopeDecision === 'approve') {
-        const newLevelsSet = new Set(user.approved_levels || []);
-        if (user.scope_requests.levels) {
-          newLevelsSet.add(user.scope_requests.levels);
+      const newLevelsSet = new Set(user.approved_levels || []);
+      const newSubjectsSet = new Set(user.approved_subjects || []);
+      const approvedItems = [];
+      const rejectedItems = [];
+
+      Object.entries(scopeDecisions).forEach(([item, data]) => {
+        if (data.decision === 'approve') {
+          approvedItems.push(item);
+          if (item.startsWith('Level: ')) {
+            newLevelsSet.add(item.replace('Level: ', ''));
+          } else if (item.startsWith('Subject: ')) {
+            newSubjectsSet.add(item.replace('Subject: ', ''));
+          }
+        } else {
+          rejectedItems.push({ item, reason: data.reason, comments: data.comments });
         }
-        
-        const newSubjectsSet = new Set(user.approved_subjects || []);
-        if (user.scope_requests.subjects) {
-          user.scope_requests.subjects.split(',').forEach(s => newSubjectsSet.add(s.trim()));
-        }
+      });
 
-        const { error } = await supabase.from('profiles').update({
-          approved_levels: Array.from(newLevelsSet),
-          approved_subjects: Array.from(newSubjectsSet),
-          scope_requests: null
-        }).eq('id', user.id);
+      const { error } = await supabase.from('profiles').update({
+        approved_levels: Array.from(newLevelsSet),
+        approved_subjects: Array.from(newSubjectsSet),
+        scope_requests: null
+      }).eq('id', user.id);
 
-        if (error) throw error;
-        toast.success('Scope request approved and merged!');
-      } else {
-        const { error } = await supabase.from('profiles').update({
-          scope_requests: null
-        }).eq('id', user.id);
+      if (error) throw error;
+      toast.success('Scope requests processed successfully!');
 
-        if (error) throw error;
-        toast.success(`Scope request rejected: ${scopeReason}`);
+      // Send summary message
+      let msgBody = `Scope Request Processed.\n`;
+      if (approvedItems.length > 0) {
+        msgBody += `Approved: ${approvedItems.join(', ')}\n`;
+      }
+      if (rejectedItems.length > 0) {
+        msgBody += `Rejected:\n`;
+        rejectedItems.forEach(r => {
+          msgBody += `- ${r.item} (Reason: ${r.reason}${r.comments ? ' - ' + r.comments : ''})\n`;
+        });
       }
 
       await supabase.from('messages').insert([{
         job_id: null,
         sender_id: adminProfile?.id,
-        receiver_id: user.id,
-        message: `Scope Request ${scopeDecision === 'approve' ? 'Approved' : 'Rejected'}. Reason: ${scopeReason}. ${scopeComments ? 'Comments: ' + scopeComments : ''}`,
+        recipient_id: user.id, // Fixed from receiver_id
+        body: msgBody, // Fixed from message
         is_internal: true
       }]);
 
@@ -655,48 +685,53 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
 
                 {user.scope_requests && (
                   <div style={{marginTop: '24px', padding: '16px', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--gold)', borderRadius: '8px'}}>
-                    <div style={{fontWeight: 600, fontSize: '14px', color: 'var(--gold)', marginBottom: '12px'}}>Pending Scope Request</div>
-                    <div style={{fontSize: '13px', marginBottom: '8px'}}><strong>Levels Requested:</strong> {user.scope_requests.levels}</div>
-                    <div style={{fontSize: '13px', marginBottom: '16px'}}><strong>Subjects Requested:</strong> {user.scope_requests.subjects}</div>
+                    <div style={{fontWeight: 600, fontSize: '14px', color: 'var(--gold)', marginBottom: '16px'}}>Pending Scope Request Adjudication</div>
                     
-                    <div style={{background: 'var(--bg)', padding: '12px', borderRadius: '4px', marginBottom: '12px'}}>
-                      <div className="form-group">
-                        <label className="form-label">Decision</label>
-                        <select className="form-input" value={scopeDecision} onChange={e => setScopeDecision(e.target.value)}>
-                          <option value="approve">Approve & Merge Scope</option>
-                          <option value="reject">Reject Request</option>
-                        </select>
+                    {Object.entries(scopeDecisions).map(([item, data]) => (
+                      <div key={item} style={{background: 'var(--bg)', padding: '12px', borderRadius: '4px', marginBottom: '16px', border: '1px solid var(--border)'}}>
+                        <div style={{fontWeight: 600, fontSize: '14px', marginBottom: '12px'}}>{item}</div>
+                        <div style={{display: 'flex', gap: '16px'}}>
+                          <div className="form-group" style={{flex: 1}}>
+                            <label className="form-label">Decision</label>
+                            <select className="form-input" value={data.decision} onChange={e => setScopeDecisions({...scopeDecisions, [item]: {...data, decision: e.target.value}})}>
+                              <option value="approve">Approve</option>
+                              <option value="reject">Reject</option>
+                            </select>
+                          </div>
+                          <div className="form-group" style={{flex: 1}}>
+                            <label className="form-label">Reasoning</label>
+                            <select className="form-input" value={data.reason} onChange={e => setScopeDecisions({...scopeDecisions, [item]: {...data, reason: e.target.value}})}>
+                              {data.decision === 'approve' ? (
+                                <>
+                                  <option>Qualifications Verified</option>
+                                  <option>Interview Passed</option>
+                                  <option>Exceptional Track Record</option>
+                                  <option>Other</option>
+                                </>
+                              ) : (
+                                <>
+                                  <option>Incomplete Qualifications</option>
+                                  <option>Failed Verification</option>
+                                  <option>Not Hiring for this Level</option>
+                                  <option>Interview Required</option>
+                                  <option>Other</option>
+                                </>
+                              )}
+                            </select>
+                          </div>
+                        </div>
+                        <div className="form-group" style={{marginBottom: 0}}>
+                          <label className="form-label">Internal Comments</label>
+                          <input type="text" className="form-input" value={data.comments} onChange={e => setScopeDecisions({...scopeDecisions, [item]: {...data, comments: e.target.value}})} placeholder="Notes on this decision..." />
+                        </div>
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">Reasoning / Category</label>
-                        <select className="form-input" value={scopeReason} onChange={e => setScopeReason(e.target.value)}>
-                          {scopeDecision === 'approve' ? (
-                            <>
-                              <option>Qualifications Verified</option>
-                              <option>Interview Passed</option>
-                              <option>Exceptional Track Record</option>
-                              <option>Other</option>
-                            </>
-                          ) : (
-                            <>
-                              <option>Incomplete Qualifications</option>
-                              <option>Failed Verification</option>
-                              <option>Not Hiring for this Level</option>
-                              <option>Interview Required</option>
-                              <option>Other</option>
-                            </>
-                          )}
-                        </select>
-                      </div>
-                      <div className="form-group" style={{marginBottom: 0}}>
-                        <label className="form-label">Internal Comments</label>
-                        <textarea className="form-input" rows="2" value={scopeComments} onChange={e => setScopeComments(e.target.value)} placeholder="Notes on this decision..."></textarea>
-                      </div>
-                    </div>
+                    ))}
 
-                    <button className="btn btn-sm" style={{background: scopeDecision === 'approve' ? 'var(--gold)' : 'var(--red)', color: scopeDecision === 'approve' ? 'black' : 'white'}} onClick={handleScopeDecisionSubmit}>
-                      Submit Decision
-                    </button>
+                    {Object.keys(scopeDecisions).length > 0 && (
+                      <button className="btn btn-sm" style={{background: 'var(--gold)', color: 'black'}} onClick={handleScopeDecisionSubmit}>
+                        Submit All Decisions
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
