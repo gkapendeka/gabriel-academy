@@ -29,7 +29,7 @@ const fmt = (n) => 'R' + parseFloat(n || 0).toLocaleString('en-ZA', {minimumFrac
 const fmtDate = (d) => { if (!d) return '—'; return new Date(d).toLocaleDateString('en-ZA', {day:'2-digit',month:'short',year:'numeric'}); };
 const daysLeft = (d) => { if (!d) return '—'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 0 ? 'Overdue!' : diff + ' day' + (diff === 1 ? '' : 's'); };
 const daysLeftColor = (d) => { if (!d) return 'var(--muted)'; const diff = Math.ceil((new Date(d) - new Date()) / (1000 * 60 * 60 * 24)); return diff <= 2 ? 'var(--red)' : diff <= 5 ? 'var(--gold)' : 'var(--muted)'; };
-const statusLabel = (s) => { const m = {new:'New',paid:'Awaiting Consultant',posted:'Posted',pending:'Awaiting Consultant',active:'In Progress',submitted:'Submitted',qa_review:'QA Review',qa_failed:'QA Failed',delivered:'Delivered',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
+const statusLabel = (s) => { const m = {new:'New Request',paid:'Awaiting Consultant',posted:'Posted to Consultants',pending:'Awaiting Consultant',active:'Attended to by Consultant',submitted:'Submitted for QA',qa_review:'Under QA Review',qa_failed:'QA Failed (Revising)',delivered:'Delivered to Client',disputed:'Disputed',cancelled:'Cancelled'}; return m[s] || s; };
 
 function StatusBadge({ status }) {
   const isGreen = status === 'delivered';

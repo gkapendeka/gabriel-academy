@@ -175,7 +175,7 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
                 <div>
                   <div style={{fontSize: '11px', color: 'var(--muted)', marginBottom: '4px'}}>Status</div>
                   <div style={{fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px'}}>
-                    <span className={`badge badge-${job.status}`}>{job.status.toUpperCase()}</span>
+                    <span className={`badge badge-${job.status}`}>{formatStatus(job.status)}</span>
                     <select 
                       className="form-input" 
                       style={{padding: '4px 8px', fontSize: '11px', height: 'auto', width: 'auto'}}
@@ -264,8 +264,9 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
                       <StatusBadge status={p.status} />
                     </div>
                   ))}
-                  <div style={{textAlign: 'right', fontSize: '13px', fontWeight: 600, marginTop: '8px'}}>
-                    Total Job Payments: R{payments.filter(p => p.job_id).reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2)} / R{job.client_budget}
+                  <div style={{textAlign: 'right', fontSize: '13px', fontWeight: 600, marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '16px'}}>
+                    <span>Total Paid: <span style={{color: 'var(--green)'}}>R{payments.filter(p => p.job_id).reduce((sum, p) => sum + Number(p.amount), 0).toFixed(2)}</span></span>
+                    <span>Remaining Balance: <span style={{color: (job.client_budget - payments.filter(p => p.job_id).reduce((sum, p) => sum + Number(p.amount), 0)) > 0 ? 'var(--red)' : 'var(--muted)'}}>R{Math.max(0, job.client_budget - payments.filter(p => p.job_id).reduce((sum, p) => sum + Number(p.amount), 0)).toFixed(2)}</span></span>
                   </div>
                 </div>
               ) : (
@@ -429,21 +430,40 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
 
   const fetchUserData = async () => {
     setLoading(true);
-    // Fetch Jobs
-    const roleCol = user.role === 'client' ? 'client_id' : 'consultant_id';
-    const { data: jobsData } = await supabase.from('jobs').select('*').eq(roleCol, user.id).order('created_at', { ascending: false });
+    let jobsData = [];
+    
+    if (user.is_manual) {
+      const { data } = await supabase.from('jobs').select('*').eq('manual_client_name', user.display_name).order('created_at', { ascending: false });
+      jobsData = data;
+    } else {
+      const roleCol = user.role === 'client' ? 'client_id' : 'consultant_id';
+      const { data } = await supabase.from('jobs').select('*').eq(roleCol, user.id).order('created_at', { ascending: false });
+      jobsData = data;
+    }
     
     let msgs = [];
+    let jobPaymentsMap = {};
     if (jobsData && jobsData.length > 0) {
-      setJobs(jobsData);
       const jobIds = jobsData.map(j => j.id);
-      // Fetch messages from these jobs where sender is this user
-      const { data: msgData } = await supabase.from('messages')
-        .select('*, jobs(title, job_ref)')
-        .eq('sender_id', user.id)
-        .in('job_id', jobIds)
-        .order('created_at', { ascending: false });
-      if (msgData) msgs = msgData;
+      
+      const { data: payData } = await supabase.from('payments').select('*').in('job_id', jobIds);
+      if (payData) {
+        payData.forEach(p => {
+          jobPaymentsMap[p.job_id] = (jobPaymentsMap[p.job_id] || 0) + Number(p.amount);
+        });
+      }
+
+      if (!user.is_manual) {
+        // Fetch messages from these jobs where sender is this user
+        const { data: msgData } = await supabase.from('messages')
+          .select('*, jobs(title, job_ref)')
+          .eq('sender_id', user.id)
+          .in('job_id', jobIds)
+          .order('created_at', { ascending: false });
+        if (msgData) msgs = msgData;
+      }
+      
+      setJobs(jobsData.map(j => ({...j, total_paid: jobPaymentsMap[j.id] || 0})));
     } else {
       setJobs([]);
     }
@@ -647,6 +667,8 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
                       <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Title</th>
                       <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Status</th>
                       <th style={{padding: '12px 16px', color: 'var(--muted)', textAlign: 'right'}}>Value</th>
+                      {user.role === 'client' && <th style={{padding: '12px 16px', color: 'var(--muted)', textAlign: 'right'}}>Paid</th>}
+                      {user.role === 'client' && <th style={{padding: '12px 16px', color: 'var(--muted)', textAlign: 'right'}}>Outstanding</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -655,14 +677,24 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
                         <td style={{padding: '12px 16px', fontFamily: 'monospace'}}>{j.job_ref}</td>
                         <td style={{padding: '12px 16px', fontWeight: 600}}>{j.title}</td>
                         <td style={{padding: '12px 16px'}}>
-                          <span className={`badge badge-${j.status}`}>{j.status.toUpperCase()}</span>
+                          <span className={`badge badge-${j.status}`}>{formatStatus(j.status)}</span>
                         </td>
                         <td style={{padding: '12px 16px', textAlign: 'right', color: 'var(--green)'}}>
                           R{user.role === 'client' ? j.client_budget : (j.consultant_payout || 0)}
                         </td>
+                        {user.role === 'client' && (
+                          <td style={{padding: '12px 16px', textAlign: 'right'}}>
+                            R{j.total_paid.toFixed(2)}
+                          </td>
+                        )}
+                        {user.role === 'client' && (
+                          <td style={{padding: '12px 16px', textAlign: 'right', color: (j.client_budget - j.total_paid) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (j.client_budget - j.total_paid) > 0 ? 600 : 400}}>
+                            R{Math.max(0, j.client_budget - j.total_paid).toFixed(2)}
+                          </td>
+                        )}
                       </tr>
                     ))}
-                    {jobs.length === 0 && <tr><td colSpan="4" style={{padding: '24px', textAlign: 'center', color: 'var(--muted)'}}>No jobs found.</td></tr>}
+                    {jobs.length === 0 && <tr><td colSpan={user.role === 'client' ? 6 : 4} style={{padding: '24px', textAlign: 'center', color: 'var(--muted)'}}>No jobs found.</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -698,7 +730,7 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
             </div>
             <div className="modal-body">
               <div style={{marginBottom: '16px'}}>
-                You are about to <strong>{actionModal.action.toUpperCase()}</strong> the account for {user.display_name}.
+                You are about to <strong>{formatStatus(actionModal.action)}</strong> the account for {user.display_name}.
                 Please provide a reason and any relevant comments for the audit log.
               </div>
               <div className="form-group">
@@ -1131,6 +1163,7 @@ function FinancesTab() {
   const [jobs, setJobs] = useState([]);
   const [consultants, setConsultants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clientFilter, setClientFilter] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -1138,10 +1171,26 @@ function FinancesTab() {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: jobsData } = await supabase.from('jobs').select('*').in('status', ['paid', 'delivered', 'completed']);
+    const { data: jobsData } = await supabase.from('jobs').select('*, profiles!client_id(display_name)');
     const { data: profsData } = await supabase.from('profiles').select('*').eq('role', 'consultant');
+    const { data: payData } = await supabase.from('payments').select('*');
     
-    if (jobsData) setJobs(jobsData);
+    let jobPaymentsMap = {};
+    if (payData) {
+      payData.forEach(p => {
+        if (p.job_id) {
+          jobPaymentsMap[p.job_id] = (jobPaymentsMap[p.job_id] || 0) + Number(p.amount);
+        }
+      });
+    }
+
+    if (jobsData) {
+      setJobs(jobsData.map(j => ({
+        ...j,
+        total_paid: jobPaymentsMap[j.id] || 0,
+        client_name: j.manual_client_name || (j.profiles ? j.profiles.display_name : 'Unknown')
+      })));
+    }
     if (profsData) setConsultants(profsData);
     setLoading(false);
   };
@@ -1185,26 +1234,40 @@ function FinancesTab() {
 
       <div style={{display: 'flex', gap: '24px'}}>
         <div style={{flex: 1}}>
-          <div className="section-title" style={{marginBottom: '16px'}}>Financial Ledger (Jobs)</div>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+            <div className="section-title">Financial Ledger (Jobs)</div>
+            <select className="form-input" style={{width: '200px'}} value={clientFilter} onChange={e => setClientFilter(e.target.value)}>
+              <option value="">All Clients</option>
+              {Array.from(new Set(jobs.map(j => j.client_name))).sort().map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
           <div className="card-box" style={{padding: 0, overflow: 'hidden'}}>
             <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left'}}>
               <thead>
                 <tr style={{background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid var(--border)'}}>
                   <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Ref</th>
+                  <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Client</th>
                   <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Status</th>
                   <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Revenue</th>
+                  <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Paid</th>
+                  <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Outstanding</th>
                   <th style={{padding: '12px 16px', color: 'var(--muted)'}}>Payout</th>
                   <th style={{padding: '12px 16px', color: 'var(--green)'}}>Margin</th>
                 </tr>
               </thead>
               <tbody>
-                {jobs.map(job => (
+                {jobs.filter(j => !clientFilter || j.client_name === clientFilter).map(job => (
                   <tr key={job.id} style={{borderBottom: '1px solid var(--border)'}}>
                     <td style={{padding: '12px 16px', fontFamily: 'monospace'}}>{job.job_ref}</td>
+                    <td style={{padding: '12px 16px', fontWeight: 500}}>{job.client_name}</td>
                     <td style={{padding: '12px 16px'}}>
-                      <span className={`badge badge-${job.status}`}>{job.status.toUpperCase()}</span>
+                      <span className={`badge badge-${job.status}`}>{formatStatus(job.status)}</span>
                     </td>
                     <td style={{padding: '12px 16px', fontWeight: 600}}>R{job.client_budget}</td>
+                    <td style={{padding: '12px 16px', fontWeight: 600}}>R{job.total_paid.toFixed(2)}</td>
+                    <td style={{padding: '12px 16px', color: (job.client_budget - job.total_paid) > 0 ? 'var(--red)' : 'var(--muted)', fontWeight: (job.client_budget - job.total_paid) > 0 ? 600 : 400}}>R{Math.max(0, job.client_budget - job.total_paid).toFixed(2)}</td>
                     <td style={{padding: '12px 16px', color: 'var(--red)'}}>- R{job.consultant_payout || 0}</td>
                     <td style={{padding: '12px 16px', color: 'var(--green)', fontWeight: 600}}>R{job.gabriel_margin || 0}</td>
                   </tr>
@@ -1255,8 +1318,33 @@ export default function AdminPortal() {
   useEffect(() => {
     const fetchUsers = async () => {
       setUsersLoading(true);
-      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      if (!error && data) setUsers(data);
+      const { data: profiles, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      
+      const { data: manualJobs } = await supabase.from('jobs').select('manual_client_name, created_at').not('manual_client_name', 'is', null);
+      
+      let allUsers = profiles || [];
+      if (manualJobs) {
+        const manualClients = [];
+        const seenNames = new Set();
+        manualJobs.forEach(j => {
+          if (!seenNames.has(j.manual_client_name)) {
+            seenNames.add(j.manual_client_name);
+            manualClients.push({
+              id: 'manual_' + j.manual_client_name,
+              role: 'client',
+              display_name: j.manual_client_name,
+              email: 'Offline / Manual Entry',
+              is_active: true,
+              is_verified: true,
+              is_manual: true,
+              created_at: j.created_at
+            });
+          }
+        });
+        allUsers = [...allUsers, ...manualClients];
+      }
+
+      setUsers(allUsers);
       setUsersLoading(false);
     };
     
@@ -1326,7 +1414,7 @@ export default function AdminPortal() {
         instructions: fullInstructions,
         client_budget: parseFloat(newJobData.budget),
         deadline: new Date(newJobData.deadline).toISOString(),
-        status: 'paid' // Automatically bypass payment for manual admin jobs
+        status: 'new' // Set to new so admin can log payment
       });
 
       if (error) throw error;
@@ -1615,7 +1703,7 @@ export default function AdminPortal() {
                 <div key={job.id} className="pipe-card" onClick={() => setSelectedJob(job)}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <div className="pipe-ref">{job.job_ref}</div>
-                    <span className={`badge badge-${job.status}`} style={{fontSize: '9px', padding: '2px 4px'}}>{job.status.toUpperCase()}</span>
+                    <span className={`badge badge-${job.status}`} style={{fontSize: '9px', padding: '2px 4px'}}>{formatStatus(job.status)}</span>
                   </div>
                   <div className="pipe-title">{job.title}</div>
                   <div className="pipe-meta">
@@ -1823,7 +1911,7 @@ export default function AdminPortal() {
                       <tr key={job.id} style={{borderBottom: '1px solid var(--border)', cursor: 'pointer'}} onClick={() => setSelectedJob(job)} className="hover-row">
                         <td style={{padding: '12px 16px', fontFamily: 'monospace', color: 'var(--gold)'}}>{job.job_ref}</td>
                         <td style={{padding: '12px 16px', fontWeight: 500}}>{job.title}</td>
-                        <td style={{padding: '12px 16px'}}><span className={`badge badge-${job.status}`} style={{fontSize: '10px', padding: '2px 4px'}}>{job.status.toUpperCase()}</span></td>
+                        <td style={{padding: '12px 16px'}}><span className={`badge badge-${job.status}`} style={{fontSize: '10px', padding: '2px 4px'}}>{formatStatus(job.status)}</span></td>
                         <td style={{padding: '12px 16px', color: 'var(--muted)'}}>{getProfileName(job.client) || 'Unassigned'}</td>
                         <td style={{padding: '12px 16px', color: 'var(--muted)'}}>{getProfileName(job.consultant) || 'Unassigned'}</td>
                         <td style={{padding: '12px 16px', color: 'var(--green)'}}>R{job.client_budget}</td>
