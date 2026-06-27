@@ -284,6 +284,7 @@ export default function ConsultantPortal() {
   const [requestScopeLevel, setRequestScopeLevel] = useState('');
   const [requestScopeSubjects, setRequestScopeSubjects] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [showScopeDetails, setShowScopeDetails] = useState(false);
   const [settings, setSettings] = useState({});
 
   React.useEffect(() => {
@@ -777,8 +778,19 @@ export default function ConsultantPortal() {
                       <div className="form-note" style={{marginBottom: '12px'}}>Requests will be reviewed by the Administration team.</div>
                       
                       {profile.scope_requests && (
-                        <div style={{marginBottom: '16px', padding: '8px 12px', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--gold)', borderRadius: '6px', fontSize: '13px', color: 'var(--gold)'}}>
-                          You have a pending request submitted on {new Date(profile.scope_requests.requested_at).toLocaleDateString()}.
+                        <div style={{marginBottom: '16px', padding: '12px', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--gold)', borderRadius: '6px', fontSize: '13px', color: 'var(--gold)'}}>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <div>You have a pending request submitted on {new Date(profile.scope_requests.requested_at).toLocaleDateString()} at {new Date(profile.scope_requests.requested_at).toLocaleTimeString()}.</div>
+                            <button className="btn btn-ghost btn-xs" onClick={() => setShowScopeDetails(!showScopeDetails)} style={{color: 'var(--gold)'}}>
+                              {showScopeDetails ? 'Hide Details' : 'View Details'}
+                            </button>
+                          </div>
+                          {showScopeDetails && (
+                            <div style={{marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(245,158,11,0.3)', color: 'var(--text)'}}>
+                              <div style={{marginBottom: '8px'}}><strong>Levels Requested:</strong> {profile.scope_requests.levels}</div>
+                              <div><strong>Subjects Requested:</strong> {profile.scope_requests.subjects}</div>
+                            </div>
+                          )}
                         </div>
                       )}
                       
