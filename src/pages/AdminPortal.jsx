@@ -34,7 +34,7 @@ function getProfileName(profile) {
   return profile.display_name || profile.email;
 }
 
-function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUpdateStatus, onWithdraw }) {
+function AdminJobDetail({ job, profile, onBack, onPost, onPassQA, onFailQA, onUpdateStatus, onWithdraw }) {
   const { messages, sendMessage } = useMessages(job.id, profile.id);
   const [msgText, setMsgText] = useState('');
   const [msgTarget, setMsgTarget] = useState('client'); // 'client' or 'consultant'
@@ -151,18 +151,19 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
     }
   };
 
-  const clientMessages = messages.filter(m => m.sender_id === job.client_id || m.recipient_id === job.client_id);
-  const consultantMessages = messages.filter(m => m.sender_id === job.consultant_id || m.recipient_id === job.consultant_id);
+  const clientMessages = (messages || []).filter(m => m.sender_id === job.client_id || m.recipient_id === job.client_id);
+  const consultantMessages = (messages || []).filter(m => m.sender_id === job.consultant_id || m.recipient_id === job.consultant_id);
   const activeMessages = msgTarget === 'client' ? clientMessages : consultantMessages;
 
   return (
-    <div className="modal-bg">
-      <div className="modal" style={{maxWidth: '900px'}}>
-        <div className="modal-head">
-          <div className="modal-title">Admin Review: {job.job_ref}</div>
-          <button className="close-btn" onClick={onClose}>×</button>
+    <div style={{padding: '24px', flex: 1, overflowY: 'auto'}}>
+      <div style={{maxWidth: '1200px', margin: '0 auto'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px'}}>
+          <button className="btn btn-ghost" onClick={onBack}>← Back to Pipeline</button>
+          <div className="page-title" style={{margin: 0}}>Admin Review: {job.job_ref}</div>
         </div>
-        <div className="modal-body" style={{display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
+        
+        <div style={{display: 'flex', gap: '24px', alignItems: 'flex-start'}}>
           
           <div style={{flex: 1}}>
             <div className="card-box">
@@ -243,7 +244,7 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
             {review && (
               <div className="card-box" style={{borderColor: 'var(--gold)', background: 'rgba(245,158,11,.05)'}}>
                 <div className="card-box-title" style={{color: 'var(--gold)'}}>Client Review</div>
-                <div style={{fontSize: '16px', marginBottom: '4px'}}>{"⭐".repeat(review.rating)}</div>
+                <div style={{fontSize: '16px', marginBottom: '4px'}}>{"⭐".repeat(review.rating || 0)}</div>
                 <div style={{fontSize: '13px'}}>{review.comment}</div>
               </div>
             )}
@@ -407,15 +408,15 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
           </div>
 
         </div>
-        <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={onClose}>Close</button>
+        <div style={{marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
+          <button className="btn btn-ghost" onClick={onBack}>Back to Pipeline</button>
           {(job.status === 'posted' || job.status === 'active') && (
             <button className="btn btn-ghost" style={{color: 'var(--red)'}} onClick={() => onWithdraw(job)}>Withdraw Job</button>
           )}
           {(job.status === 'new' || job.status === 'paid') && (
             <button 
               className="btn btn-primary" 
-              disabled={!postChecks.deadline || !postChecks.moderation || !postChecks.profit || !paymentVerified}
+              disabled={!postChecks?.deadline || !postChecks?.moderation || !postChecks?.profit || !paymentVerified}
               onClick={() => onPost(job, payoutRate, consultantDeadline, moderatedInstructions)}
             >
               Post Job to Mission Board
@@ -1656,6 +1657,7 @@ export default function AdminPortal() {
       if (error) throw error;
       toast.success("Job posted to the Mission Board!");
       setSelectedJob(null);
+      setActiveTab('pipeline');
     } catch (err) {
       toast.error('Error posting job: ' + err.message);
     }
@@ -1674,6 +1676,7 @@ export default function AdminPortal() {
       if (error) throw error;
       toast.success("Job withdrawn from the Mission Board.");
       setSelectedJob(null);
+      setActiveTab('pipeline');
     } catch (err) {
       toast.error('Error withdrawing job: ' + err.message);
     }
@@ -1690,6 +1693,7 @@ export default function AdminPortal() {
       
       if (error) throw error;
       setSelectedJob(null);
+      setActiveTab('pipeline');
 
       // Fetch client profile to send delivery email
       const { data: clientProfile } = await supabase.from('profiles').select('email').eq('id', job.client_id).single();
@@ -1715,6 +1719,7 @@ export default function AdminPortal() {
       
       if (error) throw error;
       setSelectedJob(null);
+      setActiveTab('pipeline');
 
       // Fetch consultant profile to send revision email
       const { data: consultantProfile } = await supabase.from('profiles').select('email').eq('id', job.consultant_id).single();
@@ -1831,7 +1836,7 @@ export default function AdminPortal() {
                 <div className="pipe-count">{getCol(['new', 'paid']).length}</div>
               </div>
               {getCol(['new', 'paid']).map(job => (
-                <div key={job.id} className="pipe-card" onClick={() => setSelectedJob(job)}>
+                <div key={job.id} className="pipe-card" onClick={() => { setSelectedJob(job); setActiveTab('job_detail'); }}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <div className="pipe-ref">{job.job_ref}</div>
                     {job.status === 'paid' && <span className="badge badge-delivered" style={{fontSize: '9px', padding: '2px 4px'}}>PAID</span>}
@@ -1852,7 +1857,7 @@ export default function AdminPortal() {
                 <div className="pipe-count">{getCol(['posted', 'active', 'pending', 'qa_failed']).length}</div>
               </div>
               {getCol(['posted', 'active', 'pending', 'qa_failed']).map(job => (
-                <div key={job.id} className="pipe-card" onClick={() => setSelectedJob(job)}>
+                <div key={job.id} className="pipe-card" onClick={() => { setSelectedJob(job); setActiveTab('job_detail'); }}>
                   <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <div className="pipe-ref">{job.job_ref}</div>
                     <span className={`badge badge-${job.status}`} style={{fontSize: '9px', padding: '2px 4px'}}>{formatStatus(job.status)}</span>
@@ -1872,7 +1877,7 @@ export default function AdminPortal() {
                 <div className="pipe-count" style={{background: 'var(--purple)', color: '#fff'}}>{getCol(['submitted']).length}</div>
               </div>
               {getCol(['submitted']).map(job => (
-                <div key={job.id} className="pipe-card" style={{borderColor: 'var(--purple)'}} onClick={() => setSelectedJob(job)}>
+                <div key={job.id} className="pipe-card" style={{borderColor: 'var(--purple)'}} onClick={() => { setSelectedJob(job); setActiveTab('job_detail'); }}>
                   <div className="pipe-ref" style={{color: 'var(--purple)'}}>{job.job_ref}</div>
                   <div className="pipe-title">{job.title}</div>
                   <div className="pipe-meta"><span>Submitted for review</span></div>
@@ -1887,7 +1892,7 @@ export default function AdminPortal() {
                 <div className="pipe-count">{getCol(['delivered', 'completed', 'cancelled']).length}</div>
               </div>
               {getCol(['delivered', 'completed', 'cancelled']).map(job => (
-                <div key={job.id} className="pipe-card" onClick={() => setSelectedJob(job)}>
+                <div key={job.id} className="pipe-card" onClick={() => { setSelectedJob(job); setActiveTab('job_detail'); }}>
                   <div className="pipe-ref">{job.job_ref}</div>
                   <div className="pipe-title">{job.title}</div>
                 </div>
@@ -2062,7 +2067,7 @@ export default function AdminPortal() {
                       if (searchQuery === 'Cancelled') return j.status === 'cancelled';
                       return true;
                     }).map(job => (
-                      <tr key={job.id} style={{borderBottom: '1px solid var(--border)', cursor: 'pointer'}} onClick={() => setSelectedJob(job)} className="hover-row">
+                      <tr key={job.id} style={{borderBottom: '1px solid var(--border)', cursor: 'pointer'}} onClick={() => { setSelectedJob(job); setActiveTab('job_detail'); }} className="hover-row">
                         <td style={{padding: '12px 16px', fontFamily: 'monospace', color: 'var(--gold)'}}>{job.job_ref}</td>
                         <td style={{padding: '12px 16px', fontWeight: 500}}>{job.title}</td>
                         <td style={{padding: '12px 16px'}}><span className={`badge badge-${job.status}`} style={{fontSize: '10px', padding: '2px 4px'}}>{formatStatus(job.status)}</span></td>
@@ -2080,35 +2085,96 @@ export default function AdminPortal() {
               </div>
             </div>
           )}
+          
+          {activeTab === 'job_detail' && selectedJob && (
+            <AdminJobDetail 
+              job={selectedJob} 
+              profile={profile} 
+              onBack={() => { setSelectedJob(null); setActiveTab('pipeline'); }} 
+              onPost={handlePostJob} 
+              onPassQA={handlePassQA} 
+              onFailQA={handleFailQA} 
+              onWithdraw={handleWithdrawJob}
+              onUpdateStatus={async (jobId, newStatus) => {
+                const { error } = await supabase.from('jobs').update({ status: newStatus }).eq('id', jobId);
+                if (error) toast.error('Error updating status: ' + error.message);
+                else {
+                  // Log the status change internally
+                  await supabase.from('messages').insert({
+                    job_id: jobId,
+                    sender_id: profile.id,
+                    recipient_id: selectedJob.client_id, // keep it client facing so they see order progress, or we can use is_internal
+                    body: `STATUS_UPDATE:${newStatus}`,
+                    is_internal: true
+                  });
+                  toast.success(`Status updated to ${newStatus}`);
+                  setSelectedJob(null);
+                  setActiveTab('pipeline');
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 
-      {selectedJob && (
-        <AdminJobModal 
-          job={selectedJob} 
-          profile={profile} 
-          onClose={() => setSelectedJob(null)} 
-          onPost={handlePostJob} 
-          onPassQA={handlePassQA} 
-          onFailQA={handleFailQA} 
-          onWithdraw={handleWithdrawJob}
-          onUpdateStatus={async (jobId, newStatus) => {
-            const { error } = await supabase.from('jobs').update({ status: newStatus }).eq('id', jobId);
-            if (error) toast.error('Error updating status: ' + error.message);
-            else {
-              // Log the status change internally
-              await supabase.from('messages').insert({
-                job_id: jobId,
-                sender_id: profile.id,
-                recipient_id: selectedJob.client_id, // keep it client facing so they see order progress, or we can use is_internal
-                body: `STATUS_UPDATE:${newStatus}`,
-                is_internal: true
-              });
-              toast.success(`Status updated to ${newStatus}`);
-              setSelectedJob(null);
-            }
-          }}
-        />
+      {actionModal.isOpen && (
+        <div className="modal-bg">
+          <div className="modal">
+            <div className="modal-head">
+              <div className="modal-title">Confirm Action</div>
+              <button className="close-btn" onClick={() => setActionModal({ isOpen: false, action: null })}>×</button>
+            </div>
+            <div className="modal-body">
+              <div style={{marginBottom: '16px'}}>
+                You are about to <strong>{formatStatus(actionModal.action)}</strong> the account for {user.display_name}.
+                Please provide a reason and any relevant comments for the audit log.
+              </div>
+              <div className="form-group">
+                <label className="form-label">Reason</label>
+                <select className="form-input" value={actionReason} onChange={e => setActionReason(e.target.value)}>
+                  <option value="">-- Select Reason --</option>
+                  {actionModal.action === 'reset' && (
+                    <>
+                      <option value="User Request">User Request</option>
+                      <option value="Security Breach / Suspicious Activity">Security Breach / Suspicious Activity</option>
+                      <option value="Routine Credential Rotation">Routine Credential Rotation</option>
+                    </>
+                  )}
+                  {actionModal.action === 'suspend' && (
+                    <>
+                      <option value="Policy Violation">Policy Violation</option>
+                      <option value="Payment Dispute">Payment Dispute</option>
+                      <option value="Poor QA Performance">Poor QA Performance</option>
+                      <option value="Temporary Hold">Temporary Hold</option>
+                    </>
+                  )}
+                  {actionModal.action === 'activate' && (
+                    <>
+                      <option value="Identity Verified">Identity Verified</option>
+                      <option value="Suspension Lifted">Suspension Lifted</option>
+                      <option value="Dispute Resolved">Dispute Resolved</option>
+                    </>
+                  )}
+                  {actionModal.action === 'archive' && (
+                    <>
+                      <option value="User Requested Deletion">User Requested Deletion</option>
+                      <option value="Inactive Account Cleanup">Inactive Account Cleanup</option>
+                      <option value="Permanent Ban">Permanent Ban</option>
+                    </>
+                  )}
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Additional Comments</label>
+                <textarea className="form-input" value={actionComments} onChange={e => setActionComments(e.target.value)} placeholder="Provide more details..."></textarea>
+              </div>
+            </div>
+            <div className="modal-foot">
+              <button className="btn btn-ghost" onClick={() => setActionModal({ isOpen: false, action: null })}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleActionSubmit}>Confirm & Execute</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showCreateJobModal && (
