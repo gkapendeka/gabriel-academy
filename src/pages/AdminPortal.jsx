@@ -280,7 +280,7 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
                         <div style={{fontWeight: 600}}>R{p.amount} <span style={{color: 'var(--muted)', fontWeight: 400}}>via {p.method}</span></div>
                         <div style={{color: 'var(--muted)'}}>{new Date(p.paid_at).toLocaleDateString()} {p.job_id ? '' : '(Added to Wallet)'} {p.comment ? `- ${p.comment}` : ''}</div>
                       </div>
-                      <StatusBadge status={p.status} />
+                      <span className={`badge badge-${p.status}`} style={{fontSize: '9px', padding: '2px 4px'}}>{p.status ? p.status.toUpperCase() : ''}</span>
                     </div>
                   ))}
                   <div style={{textAlign: 'right', fontSize: '13px', fontWeight: 600, marginTop: '8px', display: 'flex', justifyContent: 'flex-end', gap: '16px'}}>
