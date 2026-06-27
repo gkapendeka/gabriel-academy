@@ -71,9 +71,11 @@ function AdminJobModal({ job, profile, onClose, onPost, onPassQA, onFailQA, onUp
     // Set default consultant deadline to 24h before client deadline
     if (job.deadline && !consultantDeadline) {
       const d = new Date(job.deadline);
-      d.setHours(d.getHours() - 24);
-      // format for datetime-local input
-      setConsultantDeadline(d.toISOString().slice(0, 16));
+      if (!isNaN(d.getTime())) {
+        d.setHours(d.getHours() - 24);
+        // format for datetime-local input
+        setConsultantDeadline(d.toISOString().slice(0, 16));
+      }
     }
     loadFinancials();
   }, [job.id, job.status, job.deadline, job.client_id]);
@@ -562,7 +564,14 @@ function UserProfileView({ user, onClose, onUpdate, adminProfile }) {
         is_internal: true
       }]);
 
-      onUpdate();
+      const updatedUser = {
+        ...user,
+        approved_levels: Array.from(newLevelsSet),
+        approved_subjects: Array.from(newSubjectsSet),
+        scope_requests: null
+      };
+      
+      onUpdate(updatedUser);
     } catch (err) {
       toast.error('Failed to process scope request: ' + err.message);
     }
