@@ -9,6 +9,23 @@ import toast from 'react-hot-toast';
 import { useNotifications } from '../lib/useNotifications';
 import { NotificationBell } from '../components/NotificationBell';
 
+export const formatStatus = (s) => {
+  const map = {
+    new: 'New Request',
+    paid: 'Awaiting Consultant',
+    posted: 'Posted to Consultants',
+    pending: 'Awaiting Consultant',
+    active: 'Attended to by Consultant',
+    submitted: 'Submitted for QA',
+    qa_review: 'Under QA Review',
+    qa_failed: 'QA Failed (Revising)',
+    delivered: 'Delivered to Client',
+    disputed: 'Disputed',
+    cancelled: 'Cancelled'
+  };
+  return map[s] || (s ? s.toUpperCase() : '');
+};
+
 function getProfileName(profile) {
   if (!profile) return null;
   if (Array.isArray(profile)) {
