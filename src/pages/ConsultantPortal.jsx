@@ -305,6 +305,14 @@ export default function ConsultantPortal() {
         .eq('id', job.id);
       
       if (error) throw error;
+      
+      // Notify Admins
+      await supabase.rpc('notify_admins', {
+        p_title: 'Job Accepted',
+        p_body: `${profile.display_name} has accepted the job ${job.job_ref}.`,
+        p_link: '/admin'
+      });
+
       toast.success("Job accepted!");
       setSelectedJob(null);
     } catch (err) {

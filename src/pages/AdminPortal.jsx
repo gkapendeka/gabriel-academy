@@ -1389,6 +1389,12 @@ export default function AdminPortal() {
             </div>
             <div className={`nav-item ${activeTab === 'finances' ? 'active' : ''}`} onClick={() => setActiveTab('finances')}>Finances</div>
             <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>System Settings</div>
+            
+            <div className="nav-label" style={{marginTop: '24px'}}>Activity</div>
+            <div className={`nav-item ${activeTab === 'live_feed' ? 'active' : ''}`} onClick={() => { setActiveTab('live_feed'); markAllAsRead(); }} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              Live Feed
+              {unreadCount > 0 && <span className="badge" style={{background: 'var(--blue)', color: 'white', padding: '2px 6px', fontSize: '10px'}}>{unreadCount}</span>}
+            </div>
           </div>
         </div>
         
@@ -1507,6 +1513,44 @@ export default function AdminPortal() {
           {activeTab === 'consultants' && (
             <UsersTab adminProfile={profile} users={users} setUsers={setUsers} role="consultant" />
           )}
+          {activeTab === 'live_feed' && (
+            <div style={{padding: '24px', flex: 1, overflowY: 'auto'}}>
+              <div className="page-header" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                  <div className="page-title">Live Feed</div>
+                  <div className="page-sub">Real-time log of all platform activities.</div>
+                </div>
+                {unreadCount > 0 && (
+                  <button className="btn btn-ghost btn-sm" onClick={markAllAsRead}>Mark All as Read</button>
+                )}
+              </div>
+              
+              <div style={{display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '800px'}}>
+                {notifications.length === 0 ? (
+                  <div className="card-box empty" style={{padding: '32px', textAlign: 'center', color: 'var(--muted)'}}>No activities to display.</div>
+                ) : (
+                  notifications.map(notif => (
+                    <div key={notif.id} className="card-box" style={{display: 'flex', gap: '16px', alignItems: 'flex-start', padding: '16px', opacity: notif.is_read ? 0.7 : 1, borderLeft: notif.is_read ? '1px solid var(--border)' : '3px solid var(--blue)'}}>
+                      <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0}}>
+                        {notif.type === 'alert' ? '🔔' : notif.type === 'message' ? '💬' : '📌'}
+                      </div>
+                      <div style={{flex: 1}}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                          <div style={{fontWeight: 600, fontSize: '14px', color: notif.is_read ? 'var(--text)' : 'var(--blue)'}}>{notif.title}</div>
+                          <div style={{fontSize: '11px', color: 'var(--muted)'}}>{new Date(notif.created_at).toLocaleString()}</div>
+                        </div>
+                        <div style={{fontSize: '13px', color: 'var(--muted)', lineHeight: '1.5', marginBottom: notif.link ? '8px' : '0'}}>{notif.body}</div>
+                        {notif.link && (
+                          <div style={{fontSize: '12px', color: 'var(--blue)', cursor: 'pointer', fontWeight: 500}} onClick={() => { markAsRead(notif.id); if (notif.link === '/admin') setActiveTab('pipeline'); }}>View Details →</div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
 
           {activeTab === 'finances' && (
             <FinancesTab />
