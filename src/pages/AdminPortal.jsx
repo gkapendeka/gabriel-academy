@@ -2002,7 +2002,7 @@ export default function AdminPortal() {
                     
                     <div style={{paddingLeft: '16px', borderLeft: '2px solid var(--border)'}}>
                       <div style={{fontSize: '13px', fontWeight: 600, marginBottom: '8px', color: 'var(--muted)'}}>Subjects under this Level</div>
-                      {tax.subjects.map((sub, sIdx) => (
+                      {(tax.subjects || []).map((sub, sIdx) => (
                         <div key={sIdx} style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
                           <input className="form-input" style={{flex: 1}} value={sub} onChange={e => handleUpdateTaxonomySubject(idx, sIdx, e.target.value)} placeholder="Subject Name" />
                           <button className="btn btn-sm" style={{color: 'var(--red)', background: 'transparent', border: '1px solid var(--border)'}} onClick={() => handleRemoveTaxonomySubject(idx, sIdx)}>X</button>

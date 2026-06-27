@@ -21,7 +21,7 @@ export function useJobs(role, userId) {
 
         const { data, error } = await query;
         if (error) throw error;
-        setJobs(data);
+        setJobs(data || []);
       } catch (error) {
         console.error('Error fetching jobs:', error);
       } finally {
